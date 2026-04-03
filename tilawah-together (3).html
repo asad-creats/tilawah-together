@@ -550,16 +550,22 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimesta
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ================================================================
-// PASTE YOUR FIREBASE CONFIG HERE
+// Set Firebase config outside source code, for example:
+// <script>
+// window.__FIREBASE_CONFIG__ = {
+//   apiKey: "...",
+//   authDomain: "...",
+//   projectId: "...",
+//   storageBucket: "...",
+//   messagingSenderId: "...",
+//   appId: "..."
+// };
+// </script>
 // ================================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyAubq24RaylHuCAKy9UyfzEppAn0qYwd7k",
-  authDomain: "tilawah-together.firebaseapp.com",
-  projectId: "tilawah-together",
-  storageBucket: "tilawah-together.firebasestorage.app",
-  messagingSenderId: "512550433189",
-  appId: "1:512550433189:web:540846fa8849429e01784c"
-};
+const firebaseConfig = window.__FIREBASE_CONFIG__;
+if (!firebaseConfig || !firebaseConfig.apiKey) {
+  throw new Error('Missing Firebase config. Define window.__FIREBASE_CONFIG__ before loading this app.');
+}
 // ================================================================
 
 const fireApp = initializeApp(firebaseConfig);
