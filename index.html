@@ -551,7 +551,7 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimesta
 
 // ================================================================
 // Set Firebase config outside source code, for example:
-// <script>
+// In a script tag before this module:
 // window.__FIREBASE_CONFIG__ = {
 //   apiKey: "...",
 //   authDomain: "...",
@@ -560,7 +560,7 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimesta
 //   messagingSenderId: "...",
 //   appId: "..."
 // };
-// </script>
+// (set this in your hosting/template layer)
 // ================================================================
 const firebaseConfig = window.__FIREBASE_CONFIG__ || {
   apiKey: "AIzaSyAubq24RaylHuCAKy9UyfzEppAn0qYwd7k",
