@@ -1,0 +1,906 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tilawah Together</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #1a1a2e;
+  --ink2:   #2d2d44;
+  --ink3:   #3d3d58;
+  --sand:   #f5f0e8;
+  --sand2:  #ede6d6;
+  --sand3:  #e0d5c0;
+  --cream:  #faf7f2;
+  --sage:   #4a7c6a;
+  --sage2:  #3d6657;
+  --sage3:  #2e4f42;
+  --sage-t: rgba(74,124,106,0.12);
+  --sage-t2:rgba(74,124,106,0.22);
+  --amber:  #c8853a;
+  --amber2: #b0702a;
+  --amber-t:rgba(200,133,58,0.14);
+  --rose:   #c0504a;
+  --rose-t: rgba(192,80,74,0.12);
+  --muted:  #7a7890;
+  --muted2: #9e9cb8;
+  --border: rgba(26,26,46,0.09);
+  --border2:rgba(26,26,46,0.16);
+  --shadow: 0 2px 14px rgba(26,26,46,0.07);
+  --shadow2:0 8px 32px rgba(26,26,46,0.11);
+  --r:  16px;
+  --rs: 10px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;overflow:hidden;}
+#app{height:100dvh;min-height:100vh;display:flex;flex-direction:column;width:100%;max-width:430px;margin:0 auto;position:relative;background:var(--cream);}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s;}
+.screen.off{transform:translateX(110%);opacity:0;pointer-events:none;}
+
+/* -- LOADING -- */
+#screen-loading{align-items:center;justify-content:center;background:var(--ink);z-index:20;}
+.load-mark{font-family:'Playfair Display',serif;font-size:12px;letter-spacing:.22em;color:rgba(255,255,255,.28);margin-bottom:28px;}
+.load-moon{font-size:40px;animation:breathe 2s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
+
+/* -- AUTH -- */
+#screen-auth{background:var(--ink);overflow-y:auto;z-index:2;}
+.auth-blob{position:absolute;top:-80px;right:-80px;width:320px;height:320px;background:radial-gradient(circle,rgba(74,124,106,.22) 0%,transparent 70%);pointer-events:none;}
+.auth-blob2{position:absolute;bottom:-60px;left:-60px;width:240px;height:240px;background:radial-gradient(circle,rgba(200,133,58,.1) 0%,transparent 70%);pointer-events:none;}
+.auth-geo{position:absolute;top:0;right:0;width:180px;height:180px;opacity:.05;pointer-events:none;}
+.auth-scroll{position:relative;z-index:1;width:100%;padding:60px 28px 50px;display:flex;flex-direction:column;align-items:center;min-height:100%;}
+
+.brand{display:flex;flex-direction:column;align-items:center;margin-bottom:44px;}
+.brand-moon{font-size:32px;margin-bottom:10px;animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.brand-name{font-family:'Playfair Display',serif;font-size:11px;letter-spacing:.24em;color:rgba(255,255,255,.3);}
+
+.auth-title{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;text-align:center;line-height:1.18;color:#fff;margin-bottom:12px;}
+.auth-title em{font-style:italic;color:#c9a96e;}
+.auth-sub{font-size:13px;color:rgba(255,255,255,.38);text-align:center;margin-bottom:36px;line-height:1.75;max-width:270px;}
+
+.auth-tabs{display:flex;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:4px;margin-bottom:28px;width:100%;}
+.auth-tab{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:500;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.35);transition:all .22s;font-family:'Plus Jakarta Sans',sans-serif;}
+.auth-tab.on{background:rgba(255,255,255,.95);color:var(--ink);font-weight:600;}
+
+.auth-form{width:100%;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.28);text-transform:uppercase;margin-bottom:8px;font-weight:600;}
+.field input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);padding:14px 16px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s,background .2s;}
+.field input:focus{border-color:rgba(74,124,106,.8);background:rgba(255,255,255,.09);}
+.field input::placeholder{color:rgba(255,255,255,.18);}
+.btn{width:100%;padding:15px;border-radius:var(--rs);border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .18s;margin-bottom:10px;}
+.btn:active{transform:scale(.975);}
+.btn-primary{background:var(--sage);color:#fff;}
+.btn-primary:hover{background:var(--sage2);}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);}
+.auth-err{font-size:12px;color:#e8907a;text-align:center;margin-bottom:12px;min-height:18px;line-height:1.5;}
+
+/* -- SETUP -- */
+#screen-setup{background:var(--ink);overflow-y:auto;z-index:2;}
+.setup-scroll{position:relative;z-index:1;width:100%;padding:70px 28px 50px;display:flex;flex-direction:column;align-items:center;}
+.setup-icon{font-size:44px;margin-bottom:18px;}
+.setup-title{font-family:'Playfair Display',serif;font-size:27px;font-weight:700;color:#fff;text-align:center;margin-bottom:9px;}
+.setup-sub{font-size:13px;color:rgba(255,255,255,.36);text-align:center;margin-bottom:36px;line-height:1.75;max-width:290px;}
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0;width:100%;}
+.divider-line{flex:1;height:1px;background:rgba(255,255,255,.08);}
+.divider-txt{font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,.22);font-weight:600;}
+.setup-err{font-size:12px;color:#e8907a;text-align:center;margin-top:12px;min-height:18px;}
+
+/* -- MAIN -- */
+#screen-main{z-index:1;}
+
+.topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 20px 0;flex-shrink:0;background:var(--cream);position:relative;z-index:2;}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;}
+.app-wordmark{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.08em;color:var(--ink3);font-style:italic;}
+.conn-badge{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:11px;color:var(--muted);font-weight:500;box-shadow:var(--shadow);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);}
+.sync-dot.ok{background:#5baa8a;animation:pulse 2.5s infinite;}
+.sync-dot.syncing{background:var(--amber);animation:spin .7s linear infinite;border-radius:2px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Tabbar */
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:430px;bottom:0;display:flex;background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,14px);z-index:999;box-shadow:0 -1px 20px rgba(26,26,46,.05);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 8px 6px;cursor:pointer;}
+.tab-icon{font-size:21px;line-height:1;transition:transform .2s;}
+.tab.active .tab-icon{transform:scale(1.12);}
+.tab-label{font-size:10px;color:var(--muted2);transition:color .2s;font-weight:500;letter-spacing:.02em;}
+.tab.active .tab-label{color:var(--sage);font-weight:700;}
+.tab-pip{width:20px;height:3px;border-radius:2px;background:var(--sage);margin-top:2px;opacity:0;transition:opacity .22s,transform .22s;transform:scaleX(.3);}
+.tab.active .tab-pip{opacity:1;transform:scaleX(1);}
+
+.tab-pages{flex:1;overflow:hidden;position:relative;padding-bottom:72px;}
+.tab-page{position:absolute;inset:0;overflow-y:auto;padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px));opacity:0;pointer-events:none;transition:opacity .25s;-webkit-overflow-scrolling:touch;}
+.tab-page::-webkit-scrollbar{display:none;}
+.tab-page.active{opacity:1;pointer-events:all;}
+
+/* Hero */
+.hero{padding:18px 2px 22px;}
+.hero-eyebrow{font-size:11px;color:var(--muted2);margin-bottom:5px;letter-spacing:.05em;font-weight:500;}
+.hero-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1.22;color:var(--ink);}
+.hero-title em{font-style:italic;color:var(--amber);}
+
+/* Cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:10px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.card-stripe{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0;}
+.card-stripe.sage{background:linear-gradient(90deg,#4a7c6a,#7ab5a0);}
+.card-stripe.amber{background:linear-gradient(90deg,#c8853a,#e8a85a);}
+.card-label{font-size:10px;letter-spacing:.09em;color:var(--muted2);text-transform:uppercase;margin-bottom:14px;font-weight:700;}
+.card-row{display:flex;align-items:flex-end;justify-content:space-between;}
+.card-big{font-family:'Playfair Display',serif;font-size:56px;font-weight:700;line-height:1;color:var(--ink);}
+.card-sub{font-size:13px;color:var(--muted);margin-top:6px;font-weight:400;}
+.kbadge{display:inline-flex;align-items:center;gap:5px;background:var(--amber-t);border:1px solid rgba(200,133,58,.22);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--amber);font-weight:700;}
+
+/* Reading insights */
+.insight-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;box-shadow:var(--shadow);}
+.insight-title{font-size:10px;letter-spacing:.09em;color:var(--muted2);text-transform:uppercase;font-weight:700;margin-bottom:14px;}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.insight-item{background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:12px 13px;}
+.insight-item.wide{grid-column:1 / -1;}
+.insight-k{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted2);font-weight:700;margin-bottom:5px;}
+.insight-v{font-size:13px;color:var(--ink2);font-weight:600;line-height:1.35;}
+
+/* Current tab */
+.curr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.curr-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);}
+.curr-top{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.curr-name{font-size:13px;font-weight:700;color:var(--ink);}
+.curr-juz{font-family:'Playfair Display',serif;font-size:33px;font-weight:700;line-height:1;color:var(--ink);}
+.curr-meta{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45;}
+.curr-note{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--muted);font-size:12px;line-height:1.6;box-shadow:var(--shadow);}
+
+/* Compare */
+.compare-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;box-shadow:var(--shadow);}
+.compare-title{font-size:10px;letter-spacing:.09em;color:var(--muted2);text-transform:uppercase;font-weight:700;margin-bottom:16px;}
+.cmp-row{display:flex;align-items:center;gap:12px;margin-bottom:15px;}
+.cmp-row:last-child{margin-bottom:0;}
+.av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:13px;font-weight:700;flex-shrink:0;}
+.av.s{background:var(--sage-t);color:var(--sage);border:1.5px solid rgba(74,124,106,.28);}
+.av.a{background:var(--amber-t);color:var(--amber);border:1.5px solid rgba(200,133,58,.28);}
+.cmp-info{flex:1;}
+.cmp-name-row{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;font-weight:500;}
+.cmp-juz-val{font-weight:700;color:var(--ink);}
+.bar{height:6px;background:var(--sand2);border-radius:4px;overflow:hidden;}
+.bar-in{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.bar-in.s{background:linear-gradient(90deg,var(--sage),#7ab5a0);}
+.bar-in.a{background:linear-gradient(90deg,var(--amber),#e8a85a);}
+
+/* Pills */
+.pills{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+.pills::-webkit-scrollbar{display:none;}
+.pill{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border2);color:var(--muted);background:#fff;white-space:nowrap;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;}
+.pill.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
+
+/* Section header */
+.sec-hdr{margin:20px 0 10px;padding:0 2px;}
+.sec-lbl{font-size:10px;letter-spacing:.1em;color:var(--muted2);text-transform:uppercase;font-weight:700;}
+
+/* Panel */
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:10px;box-shadow:var(--shadow);}
+.panel-title{font-size:14px;font-weight:700;color:var(--ink);margin:-2px 0 14px;letter-spacing:-.01em;}
+
+.who-toggle{display:flex;gap:7px;margin-bottom:14px;}
+.who-btn{flex:1;padding:11px 8px;border-radius:var(--rs);border:1.5px solid var(--border2);background:var(--sand);color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+.who-btn.on-s{background:var(--sage-t2);border-color:var(--sage);color:var(--sage3);font-weight:600;}
+.who-btn.on-a{background:var(--amber-t);border-color:var(--amber);color:var(--amber2);font-weight:600;}
+
+.up-row{display:flex;gap:8px;margin-bottom:10px;}
+.sel{background:var(--sand);border:1.5px solid var(--border2);border-radius:var(--rs);padding:12px 12px;color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;flex:1;min-width:0;transition:border-color .2s;-webkit-appearance:none;}
+.sel:focus{border-color:var(--sage);}
+.inp{background:var(--sand);border:1.5px solid var(--border2);border-radius:var(--rs);padding:12px 14px;color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;width:100%;transition:border-color .2s;}
+.inp:focus{border-color:var(--sage);}
+.inp::placeholder{color:var(--muted2);}
+
+.aya-chip{display:inline-flex;align-items:center;gap:6px;background:var(--sage-t);border:1px solid rgba(74,124,106,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--sage3);font-weight:500;width:100%;}
+
+.khatam-chk{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:16px;cursor:pointer;font-weight:500;padding:10px 0;}
+.khatam-chk input{accent-color:var(--amber);width:18px;height:18px;cursor:pointer;flex-shrink:0;}
+
+.save-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;border-radius:var(--rs);border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;width:100%;letter-spacing:.01em;}
+.save-btn:active{transform:scale(.975);}
+.save-btn.sage{background:var(--sage);color:#fff;}
+.save-btn.sage:hover{background:var(--sage2);}
+.save-btn.amber{background:var(--amber);color:#fff;}
+.save-btn.amber:hover{background:var(--amber2);}
+
+/* History */
+.hist-item{background:#fff;border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
+.hist-l{display:flex;align-items:center;gap:12px;}
+.hist-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.hist-icon.q{background:var(--sage-t);}
+.hist-icon.f{background:var(--amber-t);}
+.hist-main{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.3;}
+.hist-date{font-size:11px;color:var(--muted2);font-weight:400;}
+.hist-val{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;}
+.hist-val.s{color:var(--sage);}
+.hist-val.a{color:var(--amber);}
+.del-btn{width:30px;height:30px;border-radius:50%;background:var(--sand2);border:none;color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:all .15s;flex-shrink:0;}
+.del-btn:hover{background:var(--rose-t);color:var(--rose);}
+
+/* Walk cards */
+.walk-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:10px;box-shadow:var(--shadow);}
+.walk-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.walk-nm{font-size:10px;color:var(--muted2);margin-bottom:4px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.walk-steps{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1;}
+.walk-steps.s{color:var(--sage);}
+.walk-steps.a{color:var(--amber);}
+.walk-unit{font-size:12px;color:var(--muted2);margin-top:4px;font-weight:500;}
+.walk-emoji{font-size:40px;opacity:.6;}
+.walk-stats{display:flex;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;}
+.wstat{flex:1;text-align:center;}
+.wstat:not(:last-child){border-right:1px solid var(--border);}
+.wstat-n{font-size:15px;font-weight:700;color:var(--ink);}
+.wstat-l{font-size:10px;color:var(--muted2);margin-top:2px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted2);}
+.empty-icon{font-size:38px;margin-bottom:12px;opacity:.35;}
+.empty-txt{font-size:13px;line-height:1.7;font-weight:400;}
+
+/* -- PROFILE -- */
+.prof-hero{background:var(--ink);border-radius:var(--r);margin-bottom:10px;padding:28px 22px;position:relative;overflow:hidden;box-shadow:var(--shadow2);}
+.prof-hero-glow{position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);width:280px;height:160px;background:radial-gradient(ellipse,rgba(74,124,106,.3) 0%,transparent 70%);pointer-events:none;}
+.prof-avs{display:flex;justify-content:center;margin-bottom:16px;position:relative;z-index:1;}
+.prof-av{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;border:3px solid var(--ink);}
+.prof-av:nth-child(2){margin-left:-16px;}
+.prof-av.s{background:var(--sage);color:#fff;}
+.prof-av.a{background:#c9a96e;color:var(--ink);}
+.prof-couple{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;text-align:center;margin-bottom:5px;position:relative;z-index:1;}
+.prof-since{font-size:12px;color:rgba(255,255,255,.35);text-align:center;position:relative;z-index:1;font-weight:400;}
+
+.code-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;box-shadow:var(--shadow);}
+.code-lbl{font-size:10px;letter-spacing:.1em;color:var(--muted2);text-transform:uppercase;font-weight:700;margin-bottom:10px;}
+.code-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.code-val{font-family:'Playfair Display',serif;font-size:24px;letter-spacing:.08em;color:var(--ink);font-weight:700;cursor:pointer;}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--sage);font-weight:700;cursor:pointer;padding:8px 15px;background:var(--sage-t);border-radius:20px;border:1px solid rgba(74,124,106,.2);font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;transition:all .18s;}
+.copy-btn:hover{background:var(--sage-t2);}
+
+.info-chip{background:rgba(200,133,58,.08);border:1px solid rgba(200,133,58,.18);border-radius:var(--rs);padding:12px 15px;margin-bottom:10px;font-size:12px;color:var(--amber2);line-height:1.7;font-weight:400;}
+
+.prof-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);}
+.prof-row{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border);}
+.prof-row:last-child{border-bottom:none;}
+.prof-rl{font-size:13px;font-weight:600;color:var(--ink);}
+.prof-rv{font-size:12px;color:var(--muted);font-weight:400;text-align:right;}
+.edit-inp{background:transparent;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;text-align:right;width:140px;}
+.edit-inp.s{color:var(--sage);}
+.edit-inp.a{color:var(--amber);}
+
+.btn-outline{width:100%;padding:14px;border-radius:var(--rs);border:1.5px solid var(--border2);background:transparent;color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;margin-bottom:8px;}
+.btn-outline:hover{background:var(--sand);}
+.btn-danger{width:100%;padding:14px;border-radius:var(--rs);border:1.5px solid rgba(192,80,74,.22);background:var(--rose-t);color:var(--rose);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;margin-bottom:8px;}
+.btn-danger:hover{background:rgba(192,80,74,.18);}
+
+/* Toast */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);border-radius:22px;padding:12px 24px;font-size:13px;font-weight:600;color:#fff;z-index:999;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;box-shadow:0 10px 28px rgba(26,26,46,.28);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media (max-width:390px){
+  .tab-page{padding:12px 12px calc(92px + env(safe-area-inset-bottom,0px));}
+  .hero{padding:14px 2px 16px;}
+  .hero-title{font-size:24px;}
+  .card,.panel,.insight-card,.curr-card,.walk-card,.code-card,.prof-section{padding:15px;}
+  .curr-grid{grid-template-columns:1fr;}
+  .up-row{flex-direction:column;}
+  .tab{padding:10px 6px 5px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- LOADING -->
+<div class="screen" id="screen-loading">
+  <div class="load-mark">TILAWAH TOGETHER</div>
+  <div class="load-moon">☽</div>
+</div>
+
+<!-- AUTH -->
+<div class="screen off" id="screen-auth">
+  <div class="auth-blob"></div>
+  <div class="auth-blob2"></div>
+  <svg class="auth-geo" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="white" stroke-width="0.7">
+      <polygon points="90,8 172,50 172,130 90,172 8,130 8,50"/>
+      <polygon points="90,28 152,62 152,118 90,152 28,118 28,62"/>
+      <circle cx="90" cy="90" r="42"/>
+      <circle cx="90" cy="90" r="24"/>
+      <line x1="90" y1="8" x2="90" y2="172"/>
+      <line x1="8" y1="50" x2="172" y2="130"/>
+      <line x1="172" y1="50" x2="8" y2="130"/>
+    </g>
+  </svg>
+  <div class="auth-scroll">
+    <div class="brand">
+      <div class="brand-moon">☽</div>
+      <div class="brand-name">TILAWAH TOGETHER</div>
+    </div>
+    <div class="auth-title">Your shared<br><em>journey</em> begins</div>
+    <div class="auth-sub">Track Quran & fitness with your partner - synced live across both phones.</div>
+    <div class="auth-tabs">
+      <div class="auth-tab on" id="atab-login" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" id="atab-signup" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+    <!-- Login -->
+    <div class="auth-form" id="form-login">
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="********" autocomplete="current-password"></div>
+      <div class="auth-err" id="login-err"></div>
+      <button class="btn btn-primary" onclick="doEmailLogin()">Sign in -></button>
+      <button class="btn btn-ghost" onclick="doForgotPassword()">Forgot password?</button>
+    </div>
+    <!-- Signup -->
+    <div class="auth-form" id="form-signup" style="display:none;">
+      <div class="field"><label>Your name</label><input type="text" id="signup-name" placeholder="e.g. Ahmed" autocomplete="off"></div>
+      <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="field"><label>Password (min 6 chars)</label><input type="password" id="signup-pass" placeholder="********" autocomplete="new-password"></div>
+      <div class="auth-err" id="signup-err"></div>
+      <button class="btn btn-primary" onclick="doSignup()">Create account -></button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="screen off" id="screen-setup">
+  <div class="auth-blob"></div>
+  <div class="auth-blob2"></div>
+  <div class="setup-scroll">
+    <div class="setup-icon">🌙</div>
+    <div class="setup-title">Welcome, <span id="setup-greeting">friend</span></div>
+    <div class="setup-sub">Create your couple space, or join your partner with their code.</div>
+    <div style="width:100%;">
+      <div class="field"><label>Partner's name</label><input type="text" id="setup-partner" placeholder="e.g. Fatima" autocomplete="off"></div>
+      <button class="btn btn-primary" onclick="doCreateCouple()">Create couple space -></button>
+    </div>
+    <div class="divider"><div class="divider-line"></div><div class="divider-txt">OR JOIN EXISTING</div><div class="divider-line"></div></div>
+    <div style="width:100%;">
+      <div class="field"><label>Couple code</label><input type="text" id="setup-code" placeholder="e.g. AHM-FAT-4291" style="text-transform:uppercase;letter-spacing:.08em;"></div>
+      <button class="btn btn-ghost" onclick="doJoinCouple()">Join with code -></button>
+    </div>
+    <div class="setup-err" id="setup-err"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="screen off" id="screen-main">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="app-wordmark">☽ Tilawah</span>
+      <div class="conn-badge"><div class="sync-dot ok" id="sync-dot"></div><span id="badge-names">-</span></div>
+    </div>
+  </div>
+
+  <div class="tab-pages">
+
+    <!-- QURAN -->
+    <div class="tab-page active" id="page-quran">
+      <div class="hero">
+        <div class="hero-eyebrow" id="hero-greeting">Good day</div>
+        <div class="hero-title" id="hero-name">- <em>&</em> -</div>
+      </div>
+
+      <div class="pills" id="q-pills">
+        <button class="pill on" onclick="setQPeriod('week',this)">This week</button>
+        <button class="pill" onclick="setQPeriod('month',this)">This month</button>
+        <button class="pill" onclick="setQPeriod('year',this)">This year</button>
+        <button class="pill" onclick="setQPeriod('all',this)">All time</button>
+      </div>
+      <div class="sec-hdr"><span class="sec-lbl">Log reading</span></div>
+      <div class="panel">
+        <div class="panel-title">Who is logging?</div>
+        <div class="who-toggle">
+          <button class="who-btn on-s" id="qwho-me" onclick="setQWho('me')">📖 <span id="qwho-me-lbl">Me</span></button>
+          <button class="who-btn" id="qwho-pt" onclick="setQWho('partner')">📖 <span id="qwho-pt-lbl">Partner</span></button>
+        </div>
+        <div class="up-row">
+          <select class="sel" id="q-surah" style="flex:2;"><option value="">- Surah -</option></select>
+          <select class="sel" id="q-juz"><option value="">- Juz -</option></select>
+        </div>
+        <div id="aya-row" style="display:none;">
+          <div class="up-row"><select class="sel" id="q-aya"><option value="">- Ayah No. -</option></select></div>
+          <div class="aya-chip">📌 <span id="aya-hint">Select ayah</span></div>
+        </div>
+        <label class="khatam-chk"><input type="checkbox" id="q-khatam"> Completed reading</label>
+        <button class="save-btn sage" onclick="saveQuran()">Save progress</button>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Current position</span></div>
+      <div class="curr-grid">
+        <div class="curr-card">
+          <div class="curr-top">
+            <div class="av s" id="curr-av-me">?</div>
+            <div class="curr-name" id="curr-me-name">You</div>
+          </div>
+          <div class="curr-juz" id="curr-me-juz">Juz 1</div>
+          <div class="curr-meta" id="curr-me-meta">No reading logged yet</div>
+        </div>
+        <div class="curr-card">
+          <div class="curr-top">
+            <div class="av a" id="curr-av-pt">?</div>
+            <div class="curr-name" id="curr-pt-name">Partner</div>
+          </div>
+          <div class="curr-juz" id="curr-pt-juz">Juz 1</div>
+          <div class="curr-meta" id="curr-pt-meta">No reading logged yet</div>
+        </div>
+      </div>
+      <div class="curr-note" id="curr-note">Last update: No reading logged yet.</div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Reading history</span></div>
+      <div id="quran-hist"></div>
+
+      <div style="height:10px;"></div>
+    </div>
+
+    <!-- FITNESS -->
+    <div class="tab-page" id="page-fitness">
+      <div class="hero">
+        <div class="hero-eyebrow">Stay active together</div>
+        <div class="hero-title">Step <em>challenge</em></div>
+      </div>
+
+      <div class="pills" id="f-pills">
+        <button class="pill on" onclick="setFPeriod('today',this)">Today</button>
+        <button class="pill" onclick="setFPeriod('week',this)">This week</button>
+        <button class="pill" onclick="setFPeriod('month',this)">This month</button>
+      </div>
+
+      <div id="walk-cards"></div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Log a walk</span></div>
+      <div class="panel">
+        <div class="panel-title">Who is logging?</div>
+        <div class="who-toggle">
+          <button class="who-btn on-s" id="fwho-me" onclick="setFWho('me')">🚶 <span id="fwho-me-lbl">Me</span></button>
+          <button class="who-btn" id="fwho-pt" onclick="setFWho('partner')">🚶 <span id="fwho-pt-lbl">Partner</span></button>
+        </div>
+        <input class="inp" type="number" id="f-steps" placeholder="Steps  e.g. 8000" min="0" style="margin-bottom:10px;">
+        <div class="up-row">
+          <input class="inp" type="number" id="f-km" placeholder="Distance km" step="0.1" min="0">
+          <input class="inp" type="number" id="f-mins" placeholder="Minutes" min="0">
+        </div>
+        <button class="save-btn amber" onclick="saveFit()" style="margin-top:6px;">Save walk</button>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Walk history</span></div>
+      <div id="fit-hist"></div>
+      <div style="height:10px;"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="tab-page" id="page-profile">
+      <div class="hero">
+        <div class="hero-eyebrow">Your couple space</div>
+        <div class="hero-title" style="font-size:22px;">Profile &amp; <em>settings</em></div>
+      </div>
+
+      <div class="prof-hero">
+        <div class="prof-hero-glow"></div>
+        <div class="prof-avs">
+          <div class="prof-av s" id="pav-me">?</div>
+          <div class="prof-av a" id="pav-pt">?</div>
+        </div>
+        <div class="prof-couple" id="prof-couple">- &amp; -</div>
+        <div class="prof-since" id="prof-since">-</div>
+      </div>
+
+      <div class="code-card">
+        <div class="code-lbl">Your couple code</div>
+        <div class="code-row">
+          <div class="code-val" id="prof-code" onclick="copyCode()">-</div>
+          <button class="copy-btn" onclick="copyCode()">📋 Copy & share</button>
+        </div>
+      </div>
+
+      <div class="info-chip">🔗 Share this code with your partner. Once they enter it, you'll both see each other's Quran and fitness data in real time.</div>
+
+      <div class="sec-hdr"><span class="sec-lbl">All time stats</span></div>
+      <div class="prof-section" id="prof-stats"></div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Edit names</span></div>
+      <div class="prof-section">
+        <div class="prof-row">
+          <span class="prof-rl">Your name</span>
+          <input class="edit-inp s" type="text" id="edit-me" onblur="saveName()">
+        </div>
+        <div class="prof-row">
+          <span class="prof-rl">Partner's name</span>
+          <input class="edit-inp a" type="text" id="edit-pt" onblur="savePartner()">
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="btn-outline" onclick="doSignOut()">Sign out</button>
+        <button class="btn-danger" onclick="resetApp()">Reset &amp; clear all data</button>
+      </div>
+      <div style="height:24px;"></div>
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active" id="tab-quran" onclick="switchTab('quran')">
+      <div class="tab-icon">📖</div>
+      <div class="tab-label">Quran</div>
+      <div class="tab-pip"></div>
+    </div>
+    <div class="tab" id="tab-fitness" onclick="switchTab('fitness')">
+      <div class="tab-icon">🚶</div>
+      <div class="tab-label">Fitness</div>
+      <div class="tab-pip"></div>
+    </div>
+    <div class="tab" id="tab-profile" onclick="switchTab('profile')">
+      <div class="tab-icon">🌙</div>
+      <div class="tab-label">Profile</div>
+      <div class="tab-pip"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ================================================================
+// Set Firebase config outside source code, for example:
+// <script>
+// window.__FIREBASE_CONFIG__ = {
+//   apiKey: "...",
+//   authDomain: "...",
+//   projectId: "...",
+//   storageBucket: "...",
+//   messagingSenderId: "...",
+//   appId: "..."
+// };
+// </script>
+// ================================================================
+const firebaseConfig = window.__FIREBASE_CONFIG__ || {
+  apiKey: "AIzaSyAubq24RaylHuCAKy9UyfzEppAn0qYwd7k",
+  authDomain: "tilawah-together.firebaseapp.com",
+  projectId: "tilawah-together",
+  storageBucket: "tilawah-together.firebasestorage.app",
+  messagingSenderId: "512550433189",
+  appId: "1:512550433189:web:540846fa8849429e01784c"
+};
+if (!firebaseConfig || !firebaseConfig.apiKey) {
+  throw new Error('Missing Firebase config.');
+}
+// ================================================================
+
+const fireApp = initializeApp(firebaseConfig);
+const auth = getAuth(fireApp);
+const db   = getFirestore(fireApp);
+
+const SURAHS = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Tawbah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Ash-Shu'ara","An-Naml","Al-Qasas","Al-Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Ghafir","Fussilat","Ash-Shura","Az-Zukhruf","Ad-Dukhan","Al-Jathiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Adh-Dhariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadila","Al-Hashr","Al-Mumtahanah","As-Saf","Al-Jumu'ah","Al-Munafiqun","At-Taghabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba","An-Nazi'at","Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Inshiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Ghashiyah","Al-Fajr","Al-Balad","Ash-Shams","Al-Layl","Ad-Duha","Ash-Sharh","At-Tin","Al-Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-Adiyat","Al-Qari'ah","At-Takathur","Al-Asr","Al-Humazah","Al-Fil","Quraysh","Al-Ma'un","Al-Kawthar","Al-Kafirun","An-Nasr","Al-Masad","Al-Ikhlas","Al-Falaq","An-Nas"];
+const SURAH_JUZ  = [1,1,2,3,4,5,6,7,9,10,11,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30];
+const SURAH_AYAH = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+
+let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],qPeriod:'week',fPeriod:'today',qWho:'me',fWho:'me'};
+let currentUser=null,coupleId=null,unsubCouple=null;
+const $=id=>document.getElementById(id);
+const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
+
+onAuthStateChanged(auth,async user=>{
+  if(user){currentUser=user;await loadUserData(user.uid);}
+  else{currentUser=null;if(unsubCouple){unsubCouple();unsubCouple=null;}showScreen('screen-auth');}
+});
+
+async function loadUserData(uid){
+  const snap=await getDoc(doc(db,'users',uid));
+  if(!snap.exists()||!snap.data().coupleId){
+    $('setup-greeting').textContent=snap.exists()?snap.data().name||'friend':'friend';
+    showScreen('screen-setup');return;
+  }
+  coupleId=snap.data().coupleId;S.name=snap.data().name||'';subscribeCouple();
+}
+
+function subscribeCouple(){
+  if(unsubCouple)unsubCouple();setSyncDot('syncing');
+  unsubCouple=onSnapshot(doc(db,'couples',coupleId),snap=>{
+    if(!snap.exists()){showScreen('screen-setup');return;}
+    const d=snap.data(),isM1=d.member1uid===currentUser.uid;
+    S.name=isM1?(d.member1name||S.name):(d.member2name||S.name);
+    S.partner=isM1?(d.member2name||'Partner'):(d.member1name||'Partner');
+    S.code=d.code||'';S.since=d.since||'';
+    S.quranLog=(d.quranLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    S.fitLog=(d.fitLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
+  },err=>{setSyncDot('off');console.error(err);});
+}
+
+window.switchAuthTab=tab=>{
+  $('atab-login').className='auth-tab'+(tab==='login'?' on':'');
+  $('atab-signup').className='auth-tab'+(tab==='signup'?' on':'');
+  $('form-login').style.display=tab==='login'?'':'none';
+  $('form-signup').style.display=tab==='signup'?'':'none';
+};
+
+window.doEmailLogin=async()=>{
+  const email=$('login-email').value.trim(),pass=$('login-pass').value;
+  $('login-err').textContent='';
+  if(!email||!pass){$('login-err').textContent='Please fill in all fields.';return;}
+  try{await signInWithEmailAndPassword(auth,email,pass);}
+  catch(e){$('login-err').textContent=friendlyErr(e.code);}
+};
+
+window.doSignup=async()=>{
+  const name=$('signup-name').value.trim(),email=$('signup-email').value.trim(),pass=$('signup-pass').value;
+  $('signup-err').textContent='';
+  if(!name||!email||!pass){$('signup-err').textContent='Please fill in all fields.';return;}
+  if(pass.length<6){$('signup-err').textContent='Password must be at least 6 characters.';return;}
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    await setDoc(doc(db,'users',cred.user.uid),{name,email,createdAt:serverTimestamp()});
+    $('setup-greeting').textContent=name;
+  }catch(e){$('signup-err').textContent=friendlyErr(e.code);}
+};
+
+window.doForgotPassword=async()=>{
+  const email=$('login-email').value.trim();
+  if(!email){$('login-err').textContent='Enter your email above first.';return;}
+  try{
+    await sendPasswordResetEmail(auth,email);
+    $('login-err').style.color='#5baa8a';
+    $('login-err').textContent='Reset email sent! Check your inbox.';
+  }catch(e){$('login-err').textContent=friendlyErr(e.code);}
+};
+
+window.doSignOut=async()=>{
+  if(!confirm('Sign out?'))return;
+  if(unsubCouple){unsubCouple();unsubCouple=null;}
+  await signOut(auth);
+};
+
+window.doCreateCouple=async()=>{
+  const partner=$('setup-partner').value.trim();
+  $('setup-err').textContent='';
+  if(!partner){$('setup-err').textContent="Enter your partner's name.";return;}
+  const snap=await getDoc(doc(db,'users',currentUser.uid));
+  const myName=snap.exists()?snap.data().name:'Me';
+  const code=myName.slice(0,3).toUpperCase()+'-'+partner.slice(0,3).toUpperCase()+'-'+Math.floor(1000+Math.random()*9000);
+  const since=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  coupleId=code;
+  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[]});
+  await updateDoc(doc(db,'users',currentUser.uid),{coupleId,name:myName});
+  S.name=myName;S.partner=partner;subscribeCouple();
+};
+
+window.doJoinCouple=async()=>{
+  const code=$('setup-code').value.trim().toUpperCase();
+  $('setup-err').textContent='';
+  if(!code){$('setup-err').textContent='Enter the couple code.';return;}
+  const cs=await getDoc(doc(db,'couples',code));
+  if(!cs.exists()){$('setup-err').textContent='Code not found. Check with your partner.';return;}
+  const snap=await getDoc(doc(db,'users',currentUser.uid));
+  const myName=snap.exists()?snap.data().name:'Partner';
+  coupleId=code;
+  await updateDoc(doc(db,'couples',code),{member2uid:currentUser.uid,member2name:myName});
+  await updateDoc(doc(db,'users',currentUser.uid),{coupleId:code});
+  subscribeCouple();
+};
+
+async function pushToFirestore(update){
+  if(!coupleId)return;setSyncDot('syncing');
+  try{await updateDoc(doc(db,'couples',coupleId),update);}
+  catch(e){console.error(e);setSyncDot('off');}
+}
+
+function applyNames(){
+  const h=new Date().getHours(),gr=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  $('hero-greeting').textContent=gr+', '+S.name;
+  $('hero-name').innerHTML=S.name+' <em>&</em> '+S.partner;
+  $('badge-names').textContent=S.name+' & '+S.partner;
+  const mi=S.name.charAt(0).toUpperCase(),pi=S.partner.charAt(0).toUpperCase();
+  ['av-me','pav-me'].forEach(id=>$(id)&&($(id).textContent=mi));
+  ['av-pt','pav-pt'].forEach(id=>$(id)&&($(id).textContent=pi));
+  ['curr-av-me'].forEach(id=>$(id)&&($(id).textContent=mi));
+  ['curr-av-pt'].forEach(id=>$(id)&&($(id).textContent=pi));
+  $('curr-me-name').textContent=S.name;
+  $('curr-pt-name').textContent=S.partner;
+  $('qwho-me-lbl').textContent=S.name;$('qwho-pt-lbl').textContent=S.partner;
+  $('fwho-me-lbl').textContent=S.name;$('fwho-pt-lbl').textContent=S.partner;
+  $('prof-couple').textContent=S.name+' & '+S.partner;
+  $('prof-since').textContent='Together since '+S.since;
+  $('prof-code').textContent=S.code;
+  $('edit-me').value=S.name;$('edit-pt').value=S.partner;
+}
+
+function qLogs(){
+  const now=new Date();
+  return S.quranLog.filter(l=>{
+    const d=new Date(l.date);
+    if(S.qPeriod==='week'){const m=new Date(now);m.setDate(now.getDate()-((now.getDay()||7)-1));m.setHours(0,0,0,0);return d>=m;}
+    if(S.qPeriod==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    if(S.qPeriod==='year')return d.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+function fLogs(){
+  const now=new Date();
+  return S.fitLog.filter(l=>{
+    const d=new Date(l.date);
+    if(S.fPeriod==='today')return d.toDateString()===now.toDateString();
+    if(S.fPeriod==='week'){const m=new Date(now);m.setDate(now.getDate()-((now.getDay()||7)-1));m.setHours(0,0,0,0);return d>=m;}
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  });
+}
+
+function renderAll(){renderQuran();renderCurrent();renderFit();renderProfile();}
+
+function renderQuran(){
+  const logs=qLogs();
+  const h=$('quran-hist');
+  if(!S.quranLog.length){h.innerHTML='<div class="empty"><div class="empty-icon">📖</div><div class="empty-txt">No reading logged yet.<br>Add your first entry above!</div></div>';return;}
+  h.innerHTML=[...S.quranLog].reverse().slice(0,25).map((l,i)=>{
+    const ri=S.quranLog.length-1-i,who=l.who==='me'?S.name:S.partner;
+    const det=[l.surah,l.ayah?'Ayah '+l.ayah:null].filter(Boolean).join(' - ');
+    return `<div class="hist-item">
+      <div class="hist-l">
+        <div class="hist-icon q">📖</div>
+        <div><div class="hist-main">${who}${det?' - '+det:''}</div><div class="hist-date">${fmtDate(l.date)}${l.khatam?' - Completed':''}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="hist-val s">Juz ${l.juz}</span>
+        ${l.who==='me'?`<button class="del-btn" onclick="delQ(${ri})">x</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCurrent(){
+  const myLogs=S.quranLog.filter(l=>l.who==='me');
+  const ptLogs=S.quranLog.filter(l=>l.who==='partner');
+  const allLogs=S.quranLog;
+  const lastOf=arr=>arr.length?arr.reduce((a,b)=>new Date(a.date)>new Date(b.date)?a:b):null;
+  const myLast=lastOf(myLogs),ptLast=lastOf(ptLogs);
+
+  const setCard=(prefix,entry)=>{
+    if(!entry){
+      $(prefix+'-juz').textContent='No entry';
+      $(prefix+'-meta').textContent='No reading logged yet';
+      return;
+    }
+    $(prefix+'-juz').textContent='Juz '+entry.juz;
+    const parts=[];
+    if(entry.surah)parts.push(entry.surah);
+    if(entry.ayah)parts.push('Ayah '+entry.ayah);
+    parts.push(fmtDate(entry.date));
+    $(prefix+'-meta').textContent=parts.join(' - ');
+  };
+
+  setCard('curr-me',myLast);
+  setCard('curr-pt',ptLast);
+
+  if(allLogs.length){
+    const latest=lastOf(allLogs);
+    const who=latest.who==='me'?S.name:S.partner;
+    const parts=[who,'Juz '+latest.juz];
+    if(latest.surah)parts.push(latest.surah);
+    if(latest.ayah)parts.push('Ayah '+latest.ayah);
+    parts.push(fmtDate(latest.date));
+    $('curr-note').textContent='Last update: '+parts.join(' - ');
+  }else{
+    $('curr-note').textContent='Last update: No reading logged yet.';
+  }
+}
+
+function renderFit(){
+  const logs=fLogs();
+  const myL=logs.filter(l=>l.who==='me'),ptL=logs.filter(l=>l.who==='partner');
+  const myS=myL.reduce((a,l)=>a+Number(l.steps||0),0),ptS=ptL.reduce((a,l)=>a+Number(l.steps||0),0);
+  const myKm=myL.reduce((a,l)=>a+Number(l.km||0),0),ptKm=ptL.reduce((a,l)=>a+Number(l.km||0),0);
+  const myM=myL.reduce((a,l)=>a+Number(l.mins||0),0),ptM=ptL.reduce((a,l)=>a+Number(l.mins||0),0);
+  const wc=$('walk-cards');
+  if(!myS&&!ptS){wc.innerHTML='<div class="empty"><div class="empty-icon">🚶</div><div class="empty-txt">No walks for this period.</div></div>';}
+  else{
+    const mk=(name,steps,km,mins,cls,lead)=>`<div class="walk-card">
+      <div class="walk-top">
+        <div><div class="walk-nm">${name}${lead?' 🏆':''}</div><div class="walk-steps ${cls}">${steps.toLocaleString()}</div><div class="walk-unit">steps</div></div>
+        <div class="walk-emoji">👟</div>
+      </div>
+      ${(km||mins)?`<div class="walk-stats">
+        ${km?`<div class="wstat"><div class="wstat-n">${km.toFixed(1)} km</div><div class="wstat-l">Distance</div></div>`:''}
+        ${mins?`<div class="wstat"><div class="wstat-n">${mins} min</div><div class="wstat-l">Duration</div></div>`:''}
+        ${km&&mins?`<div class="wstat"><div class="wstat-n">~${Math.round(steps*0.04)} cal</div><div class="wstat-l">Calories</div></div>`:''}
+      </div>`:''}
+    </div>`;
+    wc.innerHTML=(myS?mk(S.name,myS,myKm,myM,'s',myS>ptS):'')+(ptS?mk(S.partner,ptS,ptKm,ptM,'a',ptS>myS):'');
+  }
+  const fh=$('fit-hist');
+  if(!S.fitLog.length){fh.innerHTML='<div class="empty"><div class="empty-icon">🚶</div><div class="empty-txt">No walks logged yet.</div></div>';return;}
+  fh.innerHTML=[...S.fitLog].reverse().slice(0,20).map((l,i)=>{
+    const ri=S.fitLog.length-1-i;
+    return `<div class="hist-item">
+      <div class="hist-l">
+        <div class="hist-icon f">🚶</div>
+        <div><div class="hist-main">${l.who==='me'?S.name:S.partner}</div><div class="hist-date">${fmtDate(l.date)}${l.km?` - ${parseFloat(l.km).toFixed(1)} km`:''}${l.mins?` - ${l.mins} min`:''}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="hist-val a">${Number(l.steps).toLocaleString()}</span>
+        ${l.who==='me'?`<button class="del-btn" onclick="delF(${ri})">x</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderProfile(){
+  const myQ=S.quranLog.filter(l=>l.who==='me'),ptQ=S.quranLog.filter(l=>l.who==='partner');
+  const myK=S.quranLog.filter(l=>l.who==='me'&&l.khatam).length,ptK=S.quranLog.filter(l=>l.who==='partner'&&l.khatam).length;
+  const myS=S.fitLog.filter(l=>l.who==='me').reduce((a,l)=>a+Number(l.steps||0),0);
+  const ptS=S.fitLog.filter(l=>l.who==='partner').reduce((a,l)=>a+Number(l.steps||0),0);
+  $('prof-stats').innerHTML=`
+    <div class="prof-row"><span class="prof-rl" style="color:var(--sage)">${S.name}</span><span class="prof-rv">${myQ.length} entries - ${myK} completed - ${myS.toLocaleString()} steps</span></div>
+    <div class="prof-row"><span class="prof-rl" style="color:var(--amber)">${S.partner}</span><span class="prof-rv">${ptQ.length} entries - ${ptK} completed - ${ptS.toLocaleString()} steps</span></div>`;
+}
+
+window.saveQuran=async()=>{
+  const juz=$('q-juz').value;if(!juz){toast('Please select a Juz 📖');return;}
+  const se=$('q-surah'),surah=se.value?SURAHS[se.value-1]:'';
+  const ayah=$('q-aya').value?Number($('q-aya').value):null;
+  const khatam=$('q-khatam').checked;
+  const entry={uid:currentUser.uid,juz:Number(juz),surah,ayah,khatam,date:new Date().toISOString()};
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  await pushToFirestore({quranLog:[...(snap.data().quranLog||[]),entry]});
+  toast('Reading saved - Juz '+juz+(ayah?' - Ayah '+ayah:'')+(khatam?' - Completed':''));
+  $('q-surah').value='';$('q-juz').value='';$('q-aya').innerHTML='<option value="">- Ayah No. -</option>';
+  $('q-khatam').checked=false;$('aya-row').style.display='none';
+};
+
+window.saveFit=async()=>{
+  const steps=$('f-steps').value;if(!steps||Number(steps)<1){toast('Enter step count 🚶');return;}
+  const km=$('f-km').value,mins=$('f-mins').value;
+  const entry={uid:currentUser.uid,steps:Number(steps),km:km?Number(km):0,mins:mins?Number(mins):0,date:new Date().toISOString()};
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  await pushToFirestore({fitLog:[...(snap.data().fitLog||[]),entry]});
+  toast('🚶 '+Number(steps).toLocaleString()+' steps saved!');
+  $('f-steps').value='';$('f-km').value='';$('f-mins').value='';
+};
+
+window.delQ=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().quranLog||[])];logs.splice(i,1);await pushToFirestore({quranLog:logs});};
+window.delF=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().fitLog||[])];logs.splice(i,1);await pushToFirestore({fitLog:logs});};
+
+window.setQWho=w=>{S.qWho=w;$('qwho-me').className='who-btn'+(w==='me'?' on-s':'');$('qwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
+window.setFWho=w=>{S.fWho=w;$('fwho-me').className='who-btn'+(w==='me'?' on-s':'');$('fwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
+window.setQPeriod=(p,el)=>{S.qPeriod=p;document.querySelectorAll('#q-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderQuran();};
+window.setFPeriod=(p,el)=>{S.fPeriod=p;document.querySelectorAll('#f-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderFit();};
+window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();};
+window.saveName=async()=>{const v=$('edit-me').value.trim();if(!v)return;S.name=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member1name':'member2name';await pushToFirestore({[f]:v});await updateDoc(doc(db,'users',currentUser.uid),{name:v});applyNames();renderAll();};
+window.savePartner=async()=>{const v=$('edit-pt').value.trim();if(!v)return;S.partner=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member2name':'member1name';await pushToFirestore({[f]:v});applyNames();renderAll();};
+window.resetApp=async()=>{if(!confirm('Clear ALL couple data and sign out?'))return;await pushToFirestore({quranLog:[],fitLog:[]});toast('Data cleared');setTimeout(()=>doSignOut(),1000);};
+window.copyCode=()=>{navigator.clipboard.writeText(S.code).then(()=>toast('Code copied! 📋 Share with your partner'));};
+
+function setSyncDot(state){const d=$('sync-dot');if(!d)return;d.className='sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':'');}
+function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' - '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+let _tt;
+window.toast=msg=>{const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);};
+function friendlyErr(code){const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/invalid-email':'Invalid email address.','auth/email-already-in-use':'This email is already registered.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Incorrect email or password.','auth/network-request-failed':'Network error. Check your connection.'};return m[code]||'Something went wrong. Please try again.';}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const ss=$('q-surah');
+  SURAHS.forEach((s,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. ${s}`;ss.appendChild(o);});
+  const jz=$('q-juz');
+  for(let i=1;i<=30;i++){const o=document.createElement('option');o.value=i;o.textContent=`Juz ${i}`;jz.appendChild(o);}
+  ss.addEventListener('change',()=>{
+    if(ss.value){
+      jz.value=SURAH_JUZ[ss.value-1];
+      const total=SURAH_AYAH[ss.value-1],qa=$('q-aya');
+      qa.innerHTML='<option value="">- Ayah No. -</option>';
+      for(let i=1;i<=total;i++){const o=document.createElement('option');o.value=i;o.textContent=`Ayah ${i}`;qa.appendChild(o);}
+      $('aya-hint').textContent=SURAHS[ss.value-1]+' - '+total+' ayahs';
+      $('aya-row').style.display='';
+    }else{$('aya-row').style.display='none';}
+  });
+});
+</script>
+</body>
+</html>
+
+
