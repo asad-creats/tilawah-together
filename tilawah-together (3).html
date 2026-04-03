@@ -45,6 +45,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 #screen-loading{align-items:center;justify-content:center;background:var(--ink);z-index:20;}
 .load-mark{font-family:'Playfair Display',serif;font-size:12px;letter-spacing:.22em;color:rgba(255,255,255,.28);margin-bottom:28px;}
 .load-moon{font-size:40px;animation:breathe 2s ease-in-out infinite;}
+.load-logo{width:72px;height:72px;object-fit:contain;animation:breathe 2s ease-in-out infinite;filter:drop-shadow(0 8px 18px rgba(0,0,0,.28));}
 @keyframes breathe{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
 
 /* -- AUTH -- */
@@ -56,6 +57,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 
 .brand{display:flex;flex-direction:column;align-items:center;margin-bottom:44px;}
 .brand-moon{font-size:32px;margin-bottom:10px;animation:float 4s ease-in-out infinite;}
+.brand-logo{width:56px;height:56px;object-fit:contain;animation:float 4s ease-in-out infinite;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .brand-name{font-family:'Playfair Display',serif;font-size:11px;letter-spacing:.24em;color:rgba(255,255,255,.3);}
 
@@ -96,7 +98,8 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 
 .topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 20px 0;flex-shrink:0;background:var(--cream);position:relative;z-index:2;}
 .topbar-inner{display:flex;align-items:center;justify-content:space-between;}
-.app-wordmark{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.08em;color:var(--ink3);font-style:italic;}
+.app-wordmark{font-family:'Playfair Display',serif;font-size:15px;letter-spacing:.08em;color:var(--ink3);font-style:italic;display:inline-flex;align-items:center;gap:8px;}
+.wordmark-logo{width:20px;height:20px;object-fit:contain;}
 .conn-badge{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:11px;color:var(--muted);font-weight:500;box-shadow:var(--shadow);}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);}
 .sync-dot.ok{background:#5baa8a;animation:pulse 2.5s infinite;}
@@ -222,6 +225,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 .del-btn{width:30px;height:30px;border-radius:50%;background:var(--sand2);border:none;color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:all .15s;flex-shrink:0;}
 .del-btn:hover{background:var(--rose-t);color:var(--rose);}
 
+/* Shared notes */
+.share-box{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;box-shadow:var(--shadow);}
+.share-meta{font-size:11px;color:var(--muted2);margin-top:6px;line-height:1.5;}
+.share-text{font-size:14px;color:var(--ink2);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+
 /* Walk cards */
 .walk-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:10px;box-shadow:var(--shadow);}
 .walk-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
@@ -296,7 +304,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 <!-- LOADING -->
 <div class="screen" id="screen-loading">
   <div class="load-mark">TILAWAH TOGETHER</div>
-  <div class="load-moon">☽</div>
+  <img class="load-logo" src="./logo.svg" alt="Tilawah Together logo">
 </div>
 
 <!-- AUTH -->
@@ -316,7 +324,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
   </svg>
   <div class="auth-scroll">
     <div class="brand">
-      <div class="brand-moon">☽</div>
+      <img class="brand-logo" src="./logo.svg" alt="Tilawah Together logo">
       <div class="brand-name">TILAWAH TOGETHER</div>
     </div>
     <div class="auth-title">Your shared<br><em>journey</em> begins</div>
@@ -369,7 +377,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 <div class="screen off" id="screen-main">
   <div class="topbar">
     <div class="topbar-inner">
-      <span class="app-wordmark">☽ Tilawah</span>
+      <span class="app-wordmark"><img class="wordmark-logo" src="./logo.svg" alt="Tilawah logo"> Tilawah</span>
       <div class="conn-badge"><div class="sync-dot ok" id="sync-dot"></div><span id="badge-names">-</span></div>
     </div>
   </div>
@@ -470,6 +478,32 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div style="height:10px;"></div>
     </div>
 
+    <!-- SHARE -->
+    <div class="tab-page" id="page-share">
+      <div class="hero">
+        <div class="hero-eyebrow">A little note for each other</div>
+        <div class="hero-title">Shared <em>reminders</em></div>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Post something</span></div>
+      <div class="panel">
+        <div class="up-row">
+          <select class="sel" id="share-type">
+            <option value="Reminder">Reminder</option>
+            <option value="Ayah">Ayah</option>
+            <option value="Message">Message</option>
+          </select>
+          <input class="inp" type="date" id="share-date">
+        </div>
+        <textarea class="inp" id="share-text" rows="4" maxlength="700" placeholder="Write an ayah, reminder, or any message..."></textarea>
+        <button class="save-btn sage" onclick="saveShare()" style="margin-top:10px;">Share with partner</button>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Shared feed</span></div>
+      <div id="share-list"></div>
+      <div style="height:10px;"></div>
+    </div>
+
     <!-- PROFILE -->
     <div class="tab-page" id="page-profile">
       <div class="hero">
@@ -532,6 +566,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div class="tab-label">Fitness</div>
       <div class="tab-pip"></div>
     </div>
+    <div class="tab" id="tab-share" onclick="switchTab('share')">
+      <div class="tab-icon">💌</div>
+      <div class="tab-label">Share</div>
+      <div class="tab-pip"></div>
+    </div>
     <div class="tab" id="tab-profile" onclick="switchTab('profile')">
       <div class="tab-icon">🌙</div>
       <div class="tab-label">Profile</div>
@@ -583,7 +622,7 @@ const SURAHS = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","A
 const SURAH_JUZ  = [1,1,2,3,4,5,6,7,9,10,11,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30];
 const SURAH_AYAH = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
-let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],qPeriod:'week',fPeriod:'today',qWho:'me',fWho:'me'};
+let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],sharedLog:[],qPeriod:'week',fPeriod:'today',qWho:'me',fWho:'me'};
 let currentUser=null,coupleId=null,unsubCouple=null;
 const $=id=>document.getElementById(id);
 const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
@@ -612,6 +651,7 @@ function subscribeCouple(){
     S.code=d.code||'';S.since=d.since||'';
     S.quranLog=(d.quranLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.fitLog=(d.fitLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    S.sharedLog=(d.sharedLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
   },err=>{setSyncDot('off');console.error(err);});
 }
@@ -668,7 +708,7 @@ window.doCreateCouple=async()=>{
   const code=myName.slice(0,3).toUpperCase()+'-'+partner.slice(0,3).toUpperCase()+'-'+Math.floor(1000+Math.random()*9000);
   const since=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   coupleId=code;
-  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[]});
+  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[],sharedLog:[]});
   await updateDoc(doc(db,'users',currentUser.uid),{coupleId,name:myName});
   S.name=myName;S.partner=partner;subscribeCouple();
 };
@@ -733,7 +773,7 @@ function fLogs(){
   });
 }
 
-function renderAll(){renderQuran();renderCurrent();renderFit();renderProfile();}
+function renderAll(){renderQuran();renderCurrent();renderFit();renderShare();renderProfile();}
 
 function renderQuran(){
   const logs=qLogs();
@@ -831,6 +871,31 @@ function renderFit(){
   }).join('');
 }
 
+function renderShare(){
+  const host=$('share-list');
+  if(!S.sharedLog.length){
+    host.innerHTML='<div class="empty"><div class="empty-icon">💌</div><div class="empty-txt">No shared notes yet.<br>Post your first reminder above.</div></div>';
+    return;
+  }
+  host.innerHTML=[...S.sharedLog].reverse().slice(0,40).map((l,i)=>{
+    const ri=S.sharedLog.length-1-i;
+    const who=l.who==='me'?S.name:S.partner;
+    const t=l.type||'Message';
+    const msgDate=l.msgDate?fmtYmd(l.msgDate):'';
+    const posted=fmtDate(l.date);
+    return `<div class="share-box">
+      <div class="hist-l" style="justify-content:space-between;">
+        <div>
+          <div class="hist-main">${esc(who)} - ${esc(t)}</div>
+          <div class="hist-date">${msgDate?('For '+msgDate+' - '):''}Posted ${posted}</div>
+        </div>
+        ${l.who==='me'?`<button class="del-btn" onclick="delShare(${ri})">x</button>`:''}
+      </div>
+      <div class="share-text">${esc(l.text||'')}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderProfile(){
   const myQ=S.quranLog.filter(l=>l.who==='me'),ptQ=S.quranLog.filter(l=>l.who==='partner');
   const myK=S.quranLog.filter(l=>l.who==='me'&&l.khatam).length,ptK=S.quranLog.filter(l=>l.who==='partner'&&l.khatam).length;
@@ -866,19 +931,36 @@ window.saveFit=async()=>{
 
 window.delQ=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().quranLog||[])];logs.splice(i,1);await pushToFirestore({quranLog:logs});};
 window.delF=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().fitLog||[])];logs.splice(i,1);await pushToFirestore({fitLog:logs});};
+window.delShare=async i=>{if(!confirm('Delete this note?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().sharedLog||[])];logs.splice(i,1);await pushToFirestore({sharedLog:logs});};
 
 window.setQWho=w=>{S.qWho=w;$('qwho-me').className='who-btn'+(w==='me'?' on-s':'');$('qwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFWho=w=>{S.fWho=w;$('fwho-me').className='who-btn'+(w==='me'?' on-s':'');$('fwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setQPeriod=(p,el)=>{S.qPeriod=p;document.querySelectorAll('#q-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderQuran();};
 window.setFPeriod=(p,el)=>{S.fPeriod=p;document.querySelectorAll('#f-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderFit();};
-window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();};
+window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();};
 window.saveName=async()=>{const v=$('edit-me').value.trim();if(!v)return;S.name=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member1name':'member2name';await pushToFirestore({[f]:v});await updateDoc(doc(db,'users',currentUser.uid),{name:v});applyNames();renderAll();};
 window.savePartner=async()=>{const v=$('edit-pt').value.trim();if(!v)return;S.partner=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member2name':'member1name';await pushToFirestore({[f]:v});applyNames();renderAll();};
-window.resetApp=async()=>{if(!confirm('Clear ALL couple data and sign out?'))return;await pushToFirestore({quranLog:[],fitLog:[]});toast('Data cleared');setTimeout(()=>doSignOut(),1000);};
+window.resetApp=async()=>{if(!confirm('Clear ALL couple data and sign out?'))return;await pushToFirestore({quranLog:[],fitLog:[],sharedLog:[]});toast('Data cleared');setTimeout(()=>doSignOut(),1000);};
 window.copyCode=()=>{navigator.clipboard.writeText(S.code).then(()=>toast('Code copied! 📋 Share with your partner'));};
+window.saveShare=async()=>{
+  const text=$('share-text').value.trim();
+  const type=$('share-type').value||'Message';
+  const msgDate=$('share-date').value||todayYmd();
+  if(!text){toast('Write a note first 💌');return;}
+  const entry={uid:currentUser.uid,type,text,msgDate,date:new Date().toISOString()};
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  await pushToFirestore({sharedLog:[...(snap.data().sharedLog||[]),entry]});
+  $('share-text').value='';
+  $('share-date').value=todayYmd();
+  $('share-type').value='Reminder';
+  toast('Shared with your partner 💌');
+};
 
 function setSyncDot(state){const d=$('sync-dot');if(!d)return;d.className='sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':'');}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' - '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function fmtYmd(ymd){const d=new Date(ymd+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function todayYmd(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
+function esc(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 let _tt;
 window.toast=msg=>{const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);};
 function friendlyErr(code){const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/invalid-email':'Invalid email address.','auth/email-already-in-use':'This email is already registered.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Incorrect email or password.','auth/network-request-failed':'Network error. Check your connection.'};return m[code]||'Something went wrong. Please try again.';}
@@ -898,6 +980,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       $('aya-row').style.display='';
     }else{$('aya-row').style.display='none';}
   });
+  $('share-date').value=todayYmd();
 });
 </script>
 </body>
