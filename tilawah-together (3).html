@@ -562,9 +562,16 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimesta
 // };
 // </script>
 // ================================================================
-const firebaseConfig = window.__FIREBASE_CONFIG__;
+const firebaseConfig = window.__FIREBASE_CONFIG__ || {
+  apiKey: "AIzaSyAubq24RaylHuCAKy9UyfzEppAn0qYwd7k",
+  authDomain: "tilawah-together.firebaseapp.com",
+  projectId: "tilawah-together",
+  storageBucket: "tilawah-together.firebasestorage.app",
+  messagingSenderId: "512550433189",
+  appId: "1:512550433189:web:540846fa8849429e01784c"
+};
 if (!firebaseConfig || !firebaseConfig.apiKey) {
-  throw new Error('Missing Firebase config. Define window.__FIREBASE_CONFIG__ before loading this app.');
+  throw new Error('Missing Firebase config.');
 }
 // ================================================================
 
