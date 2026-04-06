@@ -997,11 +997,12 @@ function renderShare(){
 
 function renderProfile(){
   const myQ=S.quranLog.filter(l=>l.who==='me'),ptQ=S.quranLog.filter(l=>l.who==='partner');
+  const myCompleted=myQ.filter(l=>l.completed).length,ptCompleted=ptQ.filter(l=>l.completed).length;
   const myS=S.fitLog.filter(l=>l.who==='me').reduce((a,l)=>a+Number(l.steps||0),0);
   const ptS=S.fitLog.filter(l=>l.who==='partner').reduce((a,l)=>a+Number(l.steps||0),0);
   $('prof-stats').innerHTML=`
-    <div class="prof-row"><span class="prof-rl" style="color:var(--sage)">${S.name}</span><span class="prof-rv">${myQ.length} entries - ${myS.toLocaleString()} steps</span></div>
-    <div class="prof-row"><span class="prof-rl" style="color:var(--amber)">${S.partner}</span><span class="prof-rv">${ptQ.length} entries - ${ptS.toLocaleString()} steps</span></div>`;
+    <div class="prof-row"><span class="prof-rl" style="color:var(--sage)">${S.name}</span><span class="prof-rv">${myQ.length} entries - Completed ${myCompleted} times - ${myS.toLocaleString()} steps</span></div>
+    <div class="prof-row"><span class="prof-rl" style="color:var(--amber)">${S.partner}</span><span class="prof-rv">${ptQ.length} entries - Completed ${ptCompleted} times - ${ptS.toLocaleString()} steps</span></div>`;
 }
 
 window.saveQuran=async()=>{
