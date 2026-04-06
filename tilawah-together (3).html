@@ -287,6 +287,19 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);border-radius:22px;padding:12px 24px;font-size:13px;font-weight:600;color:#fff;z-index:999;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;box-shadow:0 10px 28px rgba(26,26,46,.28);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* Confirm modal */
+.confirm-modal{position:fixed;inset:0;background:rgba(10,12,28,.52);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:1200;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+.confirm-modal.show{opacity:1;pointer-events:auto;}
+.confirm-sheet{width:min(430px,100%);background:#fff;border-radius:18px 18px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px rgba(0,0,0,.18);transform:translateY(14px);transition:transform .22s ease;}
+.confirm-modal.show .confirm-sheet{transform:translateY(0);}
+.confirm-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:14px;}
+.confirm-actions{display:flex;gap:8px;}
+.confirm-btn{flex:1;padding:12px 10px;border-radius:12px;border:1px solid var(--border2);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.confirm-btn.cancel{background:var(--sand);color:var(--muted);}
+.confirm-btn.ok{background:var(--sage);color:#fff;border-color:var(--sage);}
+.confirm-btn.ok.danger{background:var(--rose);border-color:var(--rose);}
+
 @media (max-width:390px){
   .tab-page{padding:12px 12px calc(92px + env(safe-area-inset-bottom,0px));}
   .hero{padding:14px 2px 16px;}
@@ -406,6 +419,10 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
           <div class="up-row"><select class="sel" id="q-aya"><option value="">- Ayah No. -</option></select></div>
           <div class="aya-chip">📌 <span id="aya-hint">Select ayah</span></div>
         </div>
+        <label class="khatam-chk" for="q-complete">
+          <input type="checkbox" id="q-complete">
+          <span>Completed Quran reading</span>
+        </label>
         <button class="save-btn sage" onclick="saveQuran()">Save progress</button>
       </div>
 
@@ -573,6 +590,16 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
+  <div class="confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+    <div class="confirm-title" id="confirm-title">Please confirm</div>
+    <div class="confirm-msg" id="confirm-msg">Are you sure?</div>
+    <div class="confirm-actions">
+      <button class="confirm-btn cancel" id="confirm-cancel" type="button">Cancel</button>
+      <button class="confirm-btn ok" id="confirm-ok" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -632,6 +659,67 @@ let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],sharedLog:[],fP
 let currentUser=null,coupleId=null,unsubCouple=null;
 const $=id=>document.getElementById(id);
 const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
+let quranInputsReady=false;
+
+function normalizeQuranEntry(entry){
+  const surahIndex=Number(entry.surahIndex||entry.surahNo||entry.surah_number||0);
+  const surahNameRaw=entry.surah||entry.surahName||entry.surah_name||'';
+  const surahName=surahNameRaw||((surahIndex>=1&&surahIndex<=SURAHS.length)?SURAHS[surahIndex-1]:'');
+  const juzRaw=entry.juz??entry.juzz??entry.juzNumber??entry.juz_number??'';
+  let juz=Number(juzRaw);
+  if(!Number.isFinite(juz)||juz<1||juz>30){
+    juz=(surahIndex>=1&&surahIndex<=SURAHS.length)?SURAH_JUZ[surahIndex-1]:null;
+  }
+  const ayahRaw=entry.ayah??entry.ayahNumber??entry.ayah_number??entry.verse??'';
+  const ayah=ayahRaw===''||ayahRaw===null?null:Number(ayahRaw);
+  return {
+    ...entry,
+    surah:surahName,
+    juz:juz,
+    ayah:Number.isFinite(ayah)&&ayah>0?ayah:null,
+    completed:Boolean(entry.completed||entry.completedReading||entry.isCompleted)
+  };
+}
+
+function initQuranInputs(){
+  if(quranInputsReady)return;
+  const ss=$('q-surah'),jz=$('q-juz');
+  if(!ss||!jz)return;
+  if(ss.options.length<=1){
+    SURAHS.forEach((s,i)=>{
+      const o=document.createElement('option');
+      o.value=i+1;
+      o.textContent=`${i+1}. ${s}`;
+      ss.appendChild(o);
+    });
+  }
+  if(jz.options.length<=1){
+    for(let i=1;i<=30;i++){
+      const o=document.createElement('option');
+      o.value=i;
+      o.textContent=`Juz ${i}`;
+      jz.appendChild(o);
+    }
+  }
+  ss.addEventListener('change',()=>{
+    if(ss.value){
+      jz.value=SURAH_JUZ[ss.value-1];
+      const total=SURAH_AYAH[ss.value-1],qa=$('q-aya');
+      qa.innerHTML='<option value="">- Ayah No. -</option>';
+      for(let i=1;i<=total;i++){
+        const o=document.createElement('option');
+        o.value=i;
+        o.textContent=`Ayah ${i}`;
+        qa.appendChild(o);
+      }
+      $('aya-hint').textContent=SURAHS[ss.value-1]+' - '+total+' ayahs';
+      $('aya-row').style.display='';
+    }else{
+      $('aya-row').style.display='none';
+    }
+  });
+  quranInputsReady=true;
+}
 
 onAuthStateChanged(auth,async user=>{
   if(user){currentUser=user;await loadUserData(user.uid);}
@@ -655,7 +743,7 @@ function subscribeCouple(){
     S.name=isM1?(d.member1name||S.name):(d.member2name||S.name);
     S.partner=isM1?(d.member2name||'Partner'):(d.member1name||'Partner');
     S.code=d.code||'';S.since=d.since||'';
-    S.quranLog=(d.quranLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    S.quranLog=(d.quranLog||[]).map(l=>({...normalizeQuranEntry(l),who:l.uid===currentUser.uid?'me':'partner'}));
     S.fitLog=(d.fitLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.sharedLog=(d.sharedLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
@@ -700,7 +788,7 @@ window.doForgotPassword=async()=>{
 };
 
 window.doSignOut=async()=>{
-  if(!confirm('Sign out?'))return;
+  if(!(await askConfirm('Sign out?',{title:'Sign out'})))return;
   if(unsubCouple){unsubCouple();unsubCouple=null;}
   await signOut(auth);
 };
@@ -780,14 +868,15 @@ function renderQuran(){
   if(!S.quranLog.length){h.innerHTML='<div class="empty"><div class="empty-icon">📖</div><div class="empty-txt">No reading logged yet.<br>Add your first entry above!</div></div>';return;}
   h.innerHTML=[...S.quranLog].reverse().slice(0,25).map((l,i)=>{
     const ri=S.quranLog.length-1-i,who=l.who==='me'?S.name:S.partner;
-    const det=[l.surah,l.ayah?'Ayah '+l.ayah:null].filter(Boolean).join(' - ');
+    const juzLabel=Number.isFinite(Number(l.juz))?Number(l.juz):'-';
+    const det=[l.surah,l.ayah?'Ayah '+l.ayah:null,l.completed?'Completed reading':null].filter(Boolean).join(' - ');
     return `<div class="hist-item">
       <div class="hist-l">
         <div class="hist-icon q">📖</div>
         <div><div class="hist-main">${who}${det?' - '+det:''}</div><div class="hist-date">${fmtDate(l.date)}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="hist-val s">Juz ${l.juz}</span>
+        <span class="hist-val s">Juz ${juzLabel}</span>
         ${l.who==='me'?`<button class="del-btn" onclick="delQ(${ri})">x</button>`:''}
       </div>
     </div>`;
@@ -807,10 +896,12 @@ function renderCurrent(){
       $(prefix+'-meta').textContent='No reading logged yet';
       return;
     }
-    $(prefix+'-juz').textContent='Juz '+entry.juz;
+    const entryJuz=Number.isFinite(Number(entry.juz))?Number(entry.juz):'-';
+    $(prefix+'-juz').textContent='Juz '+entryJuz;
     const parts=[];
     if(entry.surah)parts.push(entry.surah);
     if(entry.ayah)parts.push('Ayah '+entry.ayah);
+    if(entry.completed)parts.push('Completed reading');
     parts.push(fmtDate(entry.date));
     $(prefix+'-meta').textContent=parts.join(' - ');
   };
@@ -821,9 +912,11 @@ function renderCurrent(){
   if(allLogs.length){
     const latest=lastOf(allLogs);
     const who=latest.who==='me'?S.name:S.partner;
-    const parts=[who,'Juz '+latest.juz];
+    const latestJuz=Number.isFinite(Number(latest.juz))?Number(latest.juz):'-';
+    const parts=[who,'Juz '+latestJuz];
     if(latest.surah)parts.push(latest.surah);
     if(latest.ayah)parts.push('Ayah '+latest.ayah);
+    if(latest.completed)parts.push('Completed reading');
     parts.push(fmtDate(latest.date));
     $('curr-note').textContent='Last update: '+parts.join(' - ');
   }else{
@@ -905,14 +998,17 @@ function renderProfile(){
 }
 
 window.saveQuran=async()=>{
+  initQuranInputs();
   const juz=$('q-juz').value;if(!juz){toast('Please select a Juz 📖');return;}
   const se=$('q-surah'),surah=se.value?SURAHS[se.value-1]:'';
   const ayah=$('q-aya').value?Number($('q-aya').value):null;
-  const entry={uid:currentUser.uid,juz:Number(juz),surah,ayah,date:new Date().toISOString()};
+  const completed=$('q-complete')?.checked||false;
+  const entry={uid:currentUser.uid,juz:Number(juz),surah,ayah,completed,date:new Date().toISOString()};
   const snap=await getDoc(doc(db,'couples',coupleId));
   await pushToFirestore({quranLog:[...(snap.data().quranLog||[]),entry]});
-  toast('Reading saved - Juz '+juz+(ayah?' - Ayah '+ayah:''));
+  toast('Reading saved - Juz '+juz+(ayah?' - Ayah '+ayah:'')+(completed?' - Completed reading':''));
   $('q-surah').value='';$('q-juz').value='';$('q-aya').innerHTML='<option value="">- Ayah No. -</option>';
+  if($('q-complete'))$('q-complete').checked=false;
   $('aya-row').style.display='none';
 };
 
@@ -926,9 +1022,27 @@ window.saveFit=async()=>{
   $('f-steps').value='';$('f-km').value='';$('f-mins').value='';
 };
 
-window.delQ=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().quranLog||[])];logs.splice(i,1);await pushToFirestore({quranLog:logs});};
-window.delF=async i=>{if(!confirm('Delete this entry?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().fitLog||[])];logs.splice(i,1);await pushToFirestore({fitLog:logs});};
-window.delShare=async i=>{if(!confirm('Delete this note?'))return;const snap=await getDoc(doc(db,'couples',coupleId));const logs=[...(snap.data().sharedLog||[])];logs.splice(i,1);await pushToFirestore({sharedLog:logs});};
+window.delQ=async i=>{
+  if(!(await askConfirm('Delete this reading entry?',{title:'Delete entry',confirmText:'Delete',danger:true})))return;
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const logs=[...(snap.data().quranLog||[])];
+  logs.splice(i,1);
+  await pushToFirestore({quranLog:logs});
+};
+window.delF=async i=>{
+  if(!(await askConfirm('Delete this walk entry?',{title:'Delete entry',confirmText:'Delete',danger:true})))return;
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const logs=[...(snap.data().fitLog||[])];
+  logs.splice(i,1);
+  await pushToFirestore({fitLog:logs});
+};
+window.delShare=async i=>{
+  if(!(await askConfirm('Delete this note?',{title:'Delete note',confirmText:'Delete',danger:true})))return;
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const logs=[...(snap.data().sharedLog||[])];
+  logs.splice(i,1);
+  await pushToFirestore({sharedLog:logs});
+};
 
 window.setQWho=w=>{S.qWho=w;$('qwho-me').className='who-btn'+(w==='me'?' on-s':'');$('qwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFWho=w=>{S.fWho=w;$('fwho-me').className='who-btn'+(w==='me'?' on-s':'');$('fwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
@@ -936,7 +1050,12 @@ window.setFPeriod=(p,el)=>{S.fPeriod=p;document.querySelectorAll('#f-pills .pill
 window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();};
 window.saveName=async()=>{const v=$('edit-me').value.trim();if(!v)return;S.name=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member1name':'member2name';await pushToFirestore({[f]:v});await updateDoc(doc(db,'users',currentUser.uid),{name:v});applyNames();renderAll();};
 window.savePartner=async()=>{const v=$('edit-pt').value.trim();if(!v)return;S.partner=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member2name':'member1name';await pushToFirestore({[f]:v});applyNames();renderAll();};
-window.resetApp=async()=>{if(!confirm('Clear ALL couple data and sign out?'))return;await pushToFirestore({quranLog:[],fitLog:[],sharedLog:[]});toast('Data cleared');setTimeout(()=>doSignOut(),1000);};
+window.resetApp=async()=>{
+  if(!(await askConfirm('Clear all couple data and sign out?',{title:'Reset app',confirmText:'Clear data',danger:true})))return;
+  await pushToFirestore({quranLog:[],fitLog:[],sharedLog:[]});
+  toast('Data cleared');
+  setTimeout(()=>doSignOut(),1000);
+};
 window.copyCode=()=>{navigator.clipboard.writeText(S.code).then(()=>toast('Code copied! 📋 Share with your partner'));};
 window.saveShare=async()=>{
   const text=$('share-text').value.trim();
@@ -959,25 +1078,36 @@ function todayYmd(){const d=new Date();const local=new Date(d.getTime()-d.getTim
 function esc(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 let _tt;
 window.toast=msg=>{const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);};
+let _confirmResolve=null;
+window.askConfirm=(message,opt={})=>{
+  const modal=$('confirm-modal'),ttl=$('confirm-title'),msg=$('confirm-msg'),ok=$('confirm-ok'),cancel=$('confirm-cancel');
+  ttl.textContent=opt.title||'Please confirm';
+  msg.textContent=message||'Are you sure?';
+  ok.textContent=opt.confirmText||'Confirm';
+  ok.className='confirm-btn ok'+(opt.danger?' danger':'');
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+  return new Promise(resolve=>{
+    _confirmResolve=resolve;
+    const done=v=>{
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      _confirmResolve=null;
+      resolve(v);
+    };
+    ok.onclick=()=>done(true);
+    cancel.onclick=()=>done(false);
+    modal.onclick=e=>{if(e.target===modal)done(false);};
+  });
+};
 function friendlyErr(code){const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/invalid-email':'Invalid email address.','auth/email-already-in-use':'This email is already registered.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Incorrect email or password.','auth/network-request-failed':'Network error. Check your connection.'};return m[code]||'Something went wrong. Please try again.';}
 
-window.addEventListener('DOMContentLoaded',()=>{
-  const ss=$('q-surah');
-  SURAHS.forEach((s,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. ${s}`;ss.appendChild(o);});
-  const jz=$('q-juz');
-  for(let i=1;i<=30;i++){const o=document.createElement('option');o.value=i;o.textContent=`Juz ${i}`;jz.appendChild(o);}
-  ss.addEventListener('change',()=>{
-    if(ss.value){
-      jz.value=SURAH_JUZ[ss.value-1];
-      const total=SURAH_AYAH[ss.value-1],qa=$('q-aya');
-      qa.innerHTML='<option value="">- Ayah No. -</option>';
-      for(let i=1;i<=total;i++){const o=document.createElement('option');o.value=i;o.textContent=`Ayah ${i}`;qa.appendChild(o);}
-      $('aya-hint').textContent=SURAHS[ss.value-1]+' - '+total+' ayahs';
-      $('aya-row').style.display='';
-    }else{$('aya-row').style.display='none';}
-  });
+function initUiOnceDomReady(){
+  initQuranInputs();
   $('share-date').value=todayYmd();
-});
+}
+if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',initUiOnceDomReady);
+else initUiOnceDomReady();
 </script>
 </body>
 </html>
