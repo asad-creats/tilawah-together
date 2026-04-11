@@ -488,6 +488,34 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div style="height:10px;"></div>
     </div>
 
+    <!-- INSTA -->
+    <div class="tab-page" id="page-insta">
+      <div class="hero">
+        <div class="hero-eyebrow">Screen-time accountability</div>
+        <div class="hero-title">Daily <em>Insta usage</em></div>
+      </div>
+
+      <div id="insta-cards"></div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Log usage</span></div>
+      <div class="panel">
+        <div class="panel-title">Who is logging?</div>
+        <div class="who-toggle">
+          <button class="who-btn on-s" id="iwho-me" onclick="setIWho('me')">📱 <span id="iwho-me-lbl">Me</span></button>
+          <button class="who-btn" id="iwho-pt" onclick="setIWho('partner')">📱 <span id="iwho-pt-lbl">Partner</span></button>
+        </div>
+        <div class="up-row">
+          <input class="inp" type="date" id="i-date">
+          <input class="inp" type="number" id="i-mins" placeholder="Minutes on Instagram" min="1">
+        </div>
+        <button class="save-btn amber" onclick="saveInsta()">Save usage</button>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Usage history</span></div>
+      <div id="insta-hist"></div>
+      <div style="height:10px;"></div>
+    </div>
+
     <!-- SHARE -->
     <div class="tab-page" id="page-share">
       <div class="hero">
@@ -576,6 +604,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div class="tab-label">Fitness</div>
       <div class="tab-pip"></div>
     </div>
+    <div class="tab" id="tab-insta" onclick="switchTab('insta')">
+      <div class="tab-icon">📱</div>
+      <div class="tab-label">Insta</div>
+      <div class="tab-pip"></div>
+    </div>
     <div class="tab" id="tab-share" onclick="switchTab('share')">
       <div class="tab-icon">💌</div>
       <div class="tab-label">Share</div>
@@ -601,6 +634,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
   </div>
 </div>
 
+<script src="./config.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
@@ -662,7 +696,7 @@ const SURAHS = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","A
 const SURAH_JUZ  = [1,1,2,3,4,5,6,7,9,10,11,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30];
 const SURAH_AYAH = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
-let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],sharedLog:[],fPeriod:'today',qWho:'me',fWho:'me'};
+let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],instaLog:[],sharedLog:[],fPeriod:'today',qWho:'me',fWho:'me',iWho:'me'};
 let currentUser=null,coupleId=null,unsubCouple=null;
 const $=id=>document.getElementById(id);
 const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
@@ -752,6 +786,7 @@ function subscribeCouple(){
     S.code=d.code||'';S.since=d.since||'';
     S.quranLog=(d.quranLog||[]).map(l=>({...normalizeQuranEntry(l),who:l.uid===currentUser.uid?'me':'partner'}));
     S.fitLog=(d.fitLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    S.instaLog=(d.instaLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.sharedLog=(d.sharedLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
   },err=>{setSyncDot('off');console.error(err);});
@@ -809,7 +844,7 @@ window.doCreateCouple=async()=>{
   const code=myName.slice(0,3).toUpperCase()+'-'+partner.slice(0,3).toUpperCase()+'-'+Math.floor(1000+Math.random()*9000);
   const since=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   coupleId=code;
-  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[],sharedLog:[]});
+  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[],instaLog:[],sharedLog:[]});
   await updateDoc(doc(db,'users',currentUser.uid),{coupleId,name:myName});
   S.name=myName;S.partner=partner;subscribeCouple();
 };
@@ -848,6 +883,7 @@ function applyNames(){
   $('curr-pt-name').textContent=S.partner;
   $('qwho-me-lbl').textContent=S.name;$('qwho-pt-lbl').textContent=S.partner;
   $('fwho-me-lbl').textContent=S.name;$('fwho-pt-lbl').textContent=S.partner;
+  $('iwho-me-lbl').textContent=S.name;$('iwho-pt-lbl').textContent=S.partner;
   $('prof-couple').textContent=S.name+' & '+S.partner;
   $('prof-since').textContent='Together since '+S.since;
   $('prof-code').textContent=S.code;
@@ -867,7 +903,7 @@ function fLogs(){
   });
 }
 
-function renderAll(){renderQuran();renderCurrent();renderFit();renderShare();renderProfile();}
+function renderAll(){renderQuran();renderCurrent();renderFit();renderInsta();renderShare();renderProfile();}
 
 function renderQuran(){
   const logs=qLogs();
@@ -995,6 +1031,49 @@ function renderShare(){
   }).join('');
 }
 
+function renderInsta(){
+  const today=todayYmd();
+  const todayLogs=S.instaLog.filter(l=>(l.day||todayYmd())===today);
+  const myToday=todayLogs.filter(l=>l.who==='me').reduce((a,l)=>a+Number(l.mins||0),0);
+  const ptToday=todayLogs.filter(l=>l.who==='partner').reduce((a,l)=>a+Number(l.mins||0),0);
+  const cards=$('insta-cards');
+  cards.innerHTML=`
+    <div class="walk-card">
+      <div class="walk-top">
+        <div><div class="walk-nm">${S.name}</div><div class="walk-steps s">${myToday}</div><div class="walk-unit">minutes today</div></div>
+        <div class="walk-emoji">📱</div>
+      </div>
+    </div>
+    <div class="walk-card">
+      <div class="walk-top">
+        <div><div class="walk-nm">${S.partner}</div><div class="walk-steps a">${ptToday}</div><div class="walk-unit">minutes today</div></div>
+        <div class="walk-emoji">📱</div>
+      </div>
+    </div>`;
+
+  const h=$('insta-hist');
+  if(!S.instaLog.length){
+    h.innerHTML='<div class="empty"><div class="empty-icon">📱</div><div class="empty-txt">No Insta usage logged yet.</div></div>';
+    return;
+  }
+  h.innerHTML=[...S.instaLog].reverse().slice(0,25).map((l,i)=>{
+    const ri=S.instaLog.length-1-i;
+    const who=l.who==='me'?S.name:S.partner;
+    const mins=Number(l.mins||0);
+    const day=l.day?fmtYmd(l.day):fmtDate(l.date);
+    return `<div class="hist-item">
+      <div class="hist-l">
+        <div class="hist-icon f">📱</div>
+        <div><div class="hist-main">${esc(who)}</div><div class="hist-date">${day} - ${fmtDate(l.date)}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="hist-val a">${mins}m</span>
+        ${l.who==='me'?`<button class="del-btn" onclick="delI(${ri})">x</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderProfile(){
   const myQ=S.quranLog.filter(l=>l.who==='me'),ptQ=S.quranLog.filter(l=>l.who==='partner');
   const myCompleted=myQ.filter(l=>l.completed).length,ptCompleted=ptQ.filter(l=>l.completed).length;
@@ -1029,6 +1108,18 @@ window.saveFit=async()=>{
   toast('🚶 '+Number(steps).toLocaleString()+' steps saved!');
   $('f-steps').value='';$('f-km').value='';$('f-mins').value='';
 };
+window.saveInsta=async()=>{
+  const mins=$('i-mins').value;
+  const day=$('i-date').value||todayYmd();
+  if(!mins||Number(mins)<1){toast('Enter Insta minutes 📱');return;}
+  const actorUid=S.iWho==='me'?currentUser.uid:'partner';
+  const entry={uid:actorUid,mins:Number(mins),day,date:new Date().toISOString()};
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  await pushToFirestore({instaLog:[...(snap.data().instaLog||[]),entry]});
+  toast('📱 '+Number(mins)+' minutes saved');
+  $('i-mins').value='';
+  $('i-date').value=todayYmd();
+};
 
 window.delQ=async i=>{
   if(!(await askConfirm('Delete this reading entry?',{title:'Delete entry',confirmText:'Delete',danger:true})))return;
@@ -1051,16 +1142,24 @@ window.delShare=async i=>{
   logs.splice(i,1);
   await pushToFirestore({sharedLog:logs});
 };
+window.delI=async i=>{
+  if(!(await askConfirm('Delete this Insta entry?',{title:'Delete entry',confirmText:'Delete',danger:true})))return;
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const logs=[...(snap.data().instaLog||[])];
+  logs.splice(i,1);
+  await pushToFirestore({instaLog:logs});
+};
 
 window.setQWho=w=>{S.qWho=w;$('qwho-me').className='who-btn'+(w==='me'?' on-s':'');$('qwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFWho=w=>{S.fWho=w;$('fwho-me').className='who-btn'+(w==='me'?' on-s':'');$('fwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
+window.setIWho=w=>{S.iWho=w;$('iwho-me').className='who-btn'+(w==='me'?' on-s':'');$('iwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFPeriod=(p,el)=>{S.fPeriod=p;document.querySelectorAll('#f-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderFit();};
-window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();};
+window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();if(tab==='insta')renderInsta();};
 window.saveName=async()=>{const v=$('edit-me').value.trim();if(!v)return;S.name=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member1name':'member2name';await pushToFirestore({[f]:v});await updateDoc(doc(db,'users',currentUser.uid),{name:v});applyNames();renderAll();};
 window.savePartner=async()=>{const v=$('edit-pt').value.trim();if(!v)return;S.partner=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member2name':'member1name';await pushToFirestore({[f]:v});applyNames();renderAll();};
 window.resetApp=async()=>{
   if(!(await askConfirm('Clear all couple data and sign out?',{title:'Reset app',confirmText:'Clear data',danger:true})))return;
-  await pushToFirestore({quranLog:[],fitLog:[],sharedLog:[]});
+  await pushToFirestore({quranLog:[],fitLog:[],instaLog:[],sharedLog:[]});
   toast('Data cleared');
   setTimeout(()=>doSignOut(),1000);
 };
@@ -1113,6 +1212,7 @@ function friendlyErr(code){const m={'auth/user-not-found':'No account found with
 function initUiOnceDomReady(){
   initQuranInputs();
   $('share-date').value=todayYmd();
+  $('i-date').value=todayYmd();
 }
 if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',initUiOnceDomReady);
 else initUiOnceDomReady();
