@@ -668,7 +668,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, arrayUnion }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ================================================================
@@ -736,6 +736,7 @@ let alertAudioCtx=null;
 let alertSoundReady=false;
 let notifPermissionAsked=false;
 let localNoticeId=1;
+let pushSetupDone=false;
 
 function normalizeQuranEntry(entry){
   const surahIndex=Number(entry.surahIndex||entry.surahNo||entry.surah_number||0);
@@ -798,7 +799,7 @@ function initQuranInputs(){
 }
 
 onAuthStateChanged(auth,async user=>{
-  if(user){currentUser=user;await loadUserData(user.uid);}
+  if(user){currentUser=user;setupPushNotifications();await loadUserData(user.uid);}
   else{currentUser=null;if(unsubCouple){unsubCouple();unsubCouple=null;}showScreen('screen-auth');}
 });
 
@@ -1016,6 +1017,37 @@ async function pushToFirestore(update){
   if(!coupleId)return;setSyncDot('syncing');
   try{await updateDoc(doc(db,'couples',coupleId),update);}
   catch(e){console.error(e);setSyncDot('off');}
+}
+async function savePushToken(token){
+  if(!currentUser||!token)return;
+  try{
+    await updateDoc(doc(db,'users',currentUser.uid),{fcmTokens:arrayUnion(token)});
+  }catch(_){
+    try{
+      await setDoc(doc(db,'users',currentUser.uid),{fcmTokens:[token],updatedAt:serverTimestamp()},{merge:true});
+    }catch(e){console.warn('Unable to save push token',e);}
+  }
+}
+function setupPushNotifications(){
+  if(pushSetupDone||!isNativeApp())return;
+  pushSetupDone=true;
+  const push=window.Capacitor?.Plugins?.PushNotifications;
+  if(!push||!push.register)return;
+  const init=async()=>{
+    try{
+      let perm=await push.checkPermissions();
+      if(perm.receive!=='granted')perm=await push.requestPermissions();
+      if(perm.receive!=='granted')return;
+      push.addListener('registration',t=>savePushToken(t?.value||''));
+      push.addListener('registrationError',e=>console.warn('Push registration error',e));
+      push.addListener('pushNotificationReceived',n=>{
+        const body=(n&&n.body)||'New update from your partner';
+        sendUserNotification(body);
+      });
+      await push.register();
+    }catch(e){console.warn('Push setup failed',e);}
+  };
+  init();
 }
 function resolveActorUid(who,coupleData){
   const isM1=coupleData.member1uid===currentUser.uid;
