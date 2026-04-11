@@ -730,6 +730,8 @@ let currentUser=null,coupleId=null,unsubCouple=null;
 const $=id=>document.getElementById(id);
 const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
 let quranInputsReady=false;
+let hasInitialCoupleSnapshot=false;
+let lastPartnerNotice={quran:'',fit:'',insta:'',tafseer:'',shared:''};
 
 function normalizeQuranEntry(entry){
   const surahIndex=Number(entry.surahIndex||entry.surahNo||entry.surah_number||0);
@@ -818,8 +820,44 @@ function subscribeCouple(){
     S.instaLog=(d.instaLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.tafseerLog=(d.tafseerLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.sharedLog=(d.sharedLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    notifyOnIncomingUpdates();
     setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
   },err=>{setSyncDot('off');console.error(err);});
+}
+
+function latestDateForWho(arr,who){
+  const entries=(arr||[]).filter(l=>l&&l.who===who&&l.date);
+  if(!entries.length)return '';
+  return entries.reduce((a,b)=>new Date(a.date)>new Date(b.date)?a:b).date;
+}
+function sendUserNotification(message){
+  toast(message);
+  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(120);
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    try{new Notification('Tilawah Together',{body:message});}catch(_){}
+  }
+}
+function notifyOnIncomingUpdates(){
+  const latest={
+    quran:latestDateForWho(S.quranLog,'partner'),
+    fit:latestDateForWho(S.fitLog,'partner'),
+    insta:latestDateForWho(S.instaLog,'partner'),
+    tafseer:latestDateForWho(S.tafseerLog,'partner'),
+    shared:latestDateForWho(S.sharedLog,'partner')
+  };
+  if(!hasInitialCoupleSnapshot){
+    lastPartnerNotice=latest;
+    hasInitialCoupleSnapshot=true;
+    return;
+  }
+  const labels={quran:'Quran',fit:'Fitness',insta:'Insta',tafseer:'Tafseer',shared:'Shared notes'};
+  Object.keys(latest).forEach(k=>{
+    const current=latest[k],prev=lastPartnerNotice[k]||'';
+    if(current&&(!prev||new Date(current)>new Date(prev))){
+      sendUserNotification(`${S.partner} added new ${labels[k]} data`);
+    }
+  });
+  lastPartnerNotice=latest;
 }
 
 window.switchAuthTab=tab=>{
