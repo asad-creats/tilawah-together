@@ -868,6 +868,13 @@ async function pushToFirestore(update){
   try{await updateDoc(doc(db,'couples',coupleId),update);}
   catch(e){console.error(e);setSyncDot('off');}
 }
+function resolveActorUid(who,coupleData){
+  const isM1=coupleData.member1uid===currentUser.uid;
+  const myUid=isM1?coupleData.member1uid:coupleData.member2uid;
+  const partnerUid=isM1?coupleData.member2uid:coupleData.member1uid;
+  if(who==='partner')return partnerUid||null;
+  return myUid||currentUser.uid;
+}
 
 function applyNames(){
   const h=new Date().getHours(),gr=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
@@ -1090,8 +1097,10 @@ window.saveQuran=async()=>{
   const se=$('q-surah'),surah=se.value?SURAHS[se.value-1]:'';
   const ayah=$('q-aya').value?Number($('q-aya').value):null;
   const completed=$('q-complete')?.checked||false;
-  const entry={uid:currentUser.uid,juz:Number(juz),surah,ayah,completed,date:new Date().toISOString()};
   const snap=await getDoc(doc(db,'couples',coupleId));
+  const actorUid=resolveActorUid(S.qWho,snap.data()||{});
+  if(!actorUid){toast('Partner has not joined yet');return;}
+  const entry={uid:actorUid,juz:Number(juz),surah,ayah,completed,date:new Date().toISOString()};
   await pushToFirestore({quranLog:[...(snap.data().quranLog||[]),entry]});
   toast('Reading saved - Juz '+juz+(ayah?' - Ayah '+ayah:'')+(completed?' - Completed reading':''));
   $('q-surah').value='';$('q-juz').value='';$('q-aya').innerHTML='<option value="">- Ayah No. -</option>';
@@ -1102,8 +1111,10 @@ window.saveQuran=async()=>{
 window.saveFit=async()=>{
   const steps=$('f-steps').value;if(!steps||Number(steps)<1){toast('Enter step count 🚶');return;}
   const km=$('f-km').value,mins=$('f-mins').value;
-  const entry={uid:currentUser.uid,steps:Number(steps),km:km?Number(km):0,mins:mins?Number(mins):0,date:new Date().toISOString()};
   const snap=await getDoc(doc(db,'couples',coupleId));
+  const actorUid=resolveActorUid(S.fWho,snap.data()||{});
+  if(!actorUid){toast('Partner has not joined yet');return;}
+  const entry={uid:actorUid,steps:Number(steps),km:km?Number(km):0,mins:mins?Number(mins):0,date:new Date().toISOString()};
   await pushToFirestore({fitLog:[...(snap.data().fitLog||[]),entry]});
   toast('🚶 '+Number(steps).toLocaleString()+' steps saved!');
   $('f-steps').value='';$('f-km').value='';$('f-mins').value='';
@@ -1112,9 +1123,10 @@ window.saveInsta=async()=>{
   const mins=$('i-mins').value;
   const day=$('i-date').value||todayYmd();
   if(!mins||Number(mins)<1){toast('Enter Insta minutes 📱');return;}
-  const actorUid=S.iWho==='me'?currentUser.uid:'partner';
-  const entry={uid:actorUid,mins:Number(mins),day,date:new Date().toISOString()};
   const snap=await getDoc(doc(db,'couples',coupleId));
+  const actorUid=resolveActorUid(S.iWho,snap.data()||{});
+  if(!actorUid){toast('Partner has not joined yet');return;}
+  const entry={uid:actorUid,mins:Number(mins),day,date:new Date().toISOString()};
   await pushToFirestore({instaLog:[...(snap.data().instaLog||[]),entry]});
   toast('📱 '+Number(mins)+' minutes saved');
   $('i-mins').value='';
