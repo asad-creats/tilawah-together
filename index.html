@@ -516,6 +516,29 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div style="height:10px;"></div>
     </div>
 
+    <!-- TAFSEER -->
+    <div class="tab-page" id="page-tafseer">
+      <div class="hero">
+        <div class="hero-eyebrow">Study progress together</div>
+        <div class="hero-title">Tafseer <em>notes log</em></div>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Add note</span></div>
+      <div class="panel">
+        <div class="panel-title">Who is logging?</div>
+        <div class="who-toggle">
+          <button class="who-btn on-s" id="twho-me" onclick="setTWho('me')">📚 <span id="twho-me-lbl">Me</span></button>
+          <button class="who-btn" id="twho-pt" onclick="setTWho('partner')">📚 <span id="twho-pt-lbl">Partner</span></button>
+        </div>
+        <textarea class="inp" id="t-note" rows="4" maxlength="1200" placeholder="Write what was studied in tafseer today..."></textarea>
+        <button class="save-btn sage" onclick="saveTafseer()" style="margin-top:10px;">Save tafseer note</button>
+      </div>
+
+      <div class="sec-hdr"><span class="sec-lbl">Notes history</span></div>
+      <div id="tafseer-list"></div>
+      <div style="height:10px;"></div>
+    </div>
+
     <!-- SHARE -->
     <div class="tab-page" id="page-share">
       <div class="hero">
@@ -609,6 +632,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
       <div class="tab-label">Insta</div>
       <div class="tab-pip"></div>
     </div>
+    <div class="tab" id="tab-tafseer" onclick="switchTab('tafseer')">
+      <div class="tab-icon">📚</div>
+      <div class="tab-label">Tafseer</div>
+      <div class="tab-pip"></div>
+    </div>
     <div class="tab" id="tab-share" onclick="switchTab('share')">
       <div class="tab-icon">💌</div>
       <div class="tab-label">Share</div>
@@ -696,7 +724,7 @@ const SURAHS = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","A
 const SURAH_JUZ  = [1,1,2,3,4,5,6,7,9,10,11,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30];
 const SURAH_AYAH = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
-let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],instaLog:[],sharedLog:[],fPeriod:'today',qWho:'me',fWho:'me',iWho:'me'};
+let S={name:'',partner:'',code:'',since:'',quranLog:[],fitLog:[],instaLog:[],tafseerLog:[],sharedLog:[],fPeriod:'today',qWho:'me',fWho:'me',iWho:'me',tWho:'me'};
 let currentUser=null,coupleId=null,unsubCouple=null;
 const $=id=>document.getElementById(id);
 const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main'].forEach(s=>$(s).classList.toggle('off',s!==id));
@@ -787,6 +815,7 @@ function subscribeCouple(){
     S.quranLog=(d.quranLog||[]).map(l=>({...normalizeQuranEntry(l),who:l.uid===currentUser.uid?'me':'partner'}));
     S.fitLog=(d.fitLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.instaLog=(d.instaLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
+    S.tafseerLog=(d.tafseerLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     S.sharedLog=(d.sharedLog||[]).map(l=>({...l,who:l.uid===currentUser.uid?'me':'partner'}));
     setSyncDot('ok');showScreen('screen-main');applyNames();renderAll();
   },err=>{setSyncDot('off');console.error(err);});
@@ -844,7 +873,7 @@ window.doCreateCouple=async()=>{
   const code=myName.slice(0,3).toUpperCase()+'-'+partner.slice(0,3).toUpperCase()+'-'+Math.floor(1000+Math.random()*9000);
   const since=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   coupleId=code;
-  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[],instaLog:[],sharedLog:[]});
+  await setDoc(doc(db,'couples',coupleId),{code,since,member1uid:currentUser.uid,member1name:myName,member2name:partner,member2uid:null,quranLog:[],fitLog:[],instaLog:[],tafseerLog:[],sharedLog:[]});
   await updateDoc(doc(db,'users',currentUser.uid),{coupleId,name:myName});
   S.name=myName;S.partner=partner;subscribeCouple();
 };
@@ -891,6 +920,7 @@ function applyNames(){
   $('qwho-me-lbl').textContent=S.name;$('qwho-pt-lbl').textContent=S.partner;
   $('fwho-me-lbl').textContent=S.name;$('fwho-pt-lbl').textContent=S.partner;
   $('iwho-me-lbl').textContent=S.name;$('iwho-pt-lbl').textContent=S.partner;
+  $('twho-me-lbl').textContent=S.name;$('twho-pt-lbl').textContent=S.partner;
   $('prof-couple').textContent=S.name+' & '+S.partner;
   $('prof-since').textContent='Together since '+S.since;
   $('prof-code').textContent=S.code;
@@ -910,7 +940,7 @@ function fLogs(){
   });
 }
 
-function renderAll(){renderQuran();renderCurrent();renderFit();renderInsta();renderShare();renderProfile();}
+function renderAll(){renderQuran();renderCurrent();renderFit();renderInsta();renderTafseer();renderShare();renderProfile();}
 
 function renderQuran(){
   const logs=qLogs();
@@ -1047,13 +1077,13 @@ function renderInsta(){
   cards.innerHTML=`
     <div class="walk-card">
       <div class="walk-top">
-        <div><div class="walk-nm">${S.name}</div><div class="walk-steps s">${myToday}</div><div class="walk-unit">minutes today</div></div>
+        <div><div class="walk-nm">${S.name}</div><div class="walk-steps s">${fmtDuration(myToday)}</div><div class="walk-unit">today</div></div>
         <div class="walk-emoji">📱</div>
       </div>
     </div>
     <div class="walk-card">
       <div class="walk-top">
-        <div><div class="walk-nm">${S.partner}</div><div class="walk-steps a">${ptToday}</div><div class="walk-unit">minutes today</div></div>
+        <div><div class="walk-nm">${S.partner}</div><div class="walk-steps a">${fmtDuration(ptToday)}</div><div class="walk-unit">today</div></div>
         <div class="walk-emoji">📱</div>
       </div>
     </div>`;
@@ -1074,9 +1104,31 @@ function renderInsta(){
         <div><div class="hist-main">${esc(who)}</div><div class="hist-date">${day} - ${fmtDate(l.date)}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="hist-val a">${mins}m</span>
+        <span class="hist-val a">${fmtDuration(mins)}</span>
         ${l.who==='me'?`<button class="del-btn" onclick="delI(${ri})">x</button>`:''}
       </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTafseer(){
+  const host=$('tafseer-list');
+  if(!S.tafseerLog.length){
+    host.innerHTML='<div class="empty"><div class="empty-icon">📚</div><div class="empty-txt">No tafseer notes yet.<br>Add your first note above.</div></div>';
+    return;
+  }
+  host.innerHTML=[...S.tafseerLog].reverse().slice(0,50).map((l,i)=>{
+    const ri=S.tafseerLog.length-1-i;
+    const who=l.who==='me'?S.name:S.partner;
+    return `<div class="share-box">
+      <div class="hist-l" style="justify-content:space-between;">
+        <div>
+          <div class="hist-main">${esc(who)} - Tafseer note</div>
+          <div class="hist-date">Logged ${fmtDate(l.date)}</div>
+        </div>
+        ${l.who==='me'?`<button class="del-btn" onclick="delT(${ri})">x</button>`:''}
+      </div>
+      <div class="share-text">${esc(l.text||'')}</div>
     </div>`;
   }).join('');
 }
@@ -1128,9 +1180,20 @@ window.saveInsta=async()=>{
   if(!actorUid){toast('Partner has not joined yet');return;}
   const entry={uid:actorUid,mins:Number(mins),day,date:new Date().toISOString()};
   await pushToFirestore({instaLog:[...(snap.data().instaLog||[]),entry]});
-  toast('📱 '+Number(mins)+' minutes saved');
+  toast('📱 '+fmtDuration(Number(mins))+' saved');
   $('i-mins').value='';
   $('i-date').value=todayYmd();
+};
+window.saveTafseer=async()=>{
+  const text=$('t-note').value.trim();
+  if(!text){toast('Write a tafseer note first 📚');return;}
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const actorUid=resolveActorUid(S.tWho,snap.data()||{});
+  if(!actorUid){toast('Partner has not joined yet');return;}
+  const entry={uid:actorUid,text,date:new Date().toISOString()};
+  await pushToFirestore({tafseerLog:[...(snap.data().tafseerLog||[]),entry]});
+  $('t-note').value='';
+  toast('📚 Tafseer note saved');
 };
 
 window.delQ=async i=>{
@@ -1161,17 +1224,25 @@ window.delI=async i=>{
   logs.splice(i,1);
   await pushToFirestore({instaLog:logs});
 };
+window.delT=async i=>{
+  if(!(await askConfirm('Delete this tafseer note?',{title:'Delete note',confirmText:'Delete',danger:true})))return;
+  const snap=await getDoc(doc(db,'couples',coupleId));
+  const logs=[...(snap.data().tafseerLog||[])];
+  logs.splice(i,1);
+  await pushToFirestore({tafseerLog:logs});
+};
 
 window.setQWho=w=>{S.qWho=w;$('qwho-me').className='who-btn'+(w==='me'?' on-s':'');$('qwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFWho=w=>{S.fWho=w;$('fwho-me').className='who-btn'+(w==='me'?' on-s':'');$('fwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setIWho=w=>{S.iWho=w;$('iwho-me').className='who-btn'+(w==='me'?' on-s':'');$('iwho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
+window.setTWho=w=>{S.tWho=w;$('twho-me').className='who-btn'+(w==='me'?' on-s':'');$('twho-pt').className='who-btn'+(w==='partner'?' on-a':'');};
 window.setFPeriod=(p,el)=>{S.fPeriod=p;document.querySelectorAll('#f-pills .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderFit();};
-window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();if(tab==='insta')renderInsta();};
+window.switchTab=tab=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));$('tab-'+tab).classList.add('active');$('page-'+tab).classList.add('active');if(tab==='profile')renderProfile();if(tab==='share')renderShare();if(tab==='insta')renderInsta();if(tab==='tafseer')renderTafseer();};
 window.saveName=async()=>{const v=$('edit-me').value.trim();if(!v)return;S.name=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member1name':'member2name';await pushToFirestore({[f]:v});await updateDoc(doc(db,'users',currentUser.uid),{name:v});applyNames();renderAll();};
 window.savePartner=async()=>{const v=$('edit-pt').value.trim();if(!v)return;S.partner=v;const snap=await getDoc(doc(db,'couples',coupleId));const f=snap.data().member1uid===currentUser.uid?'member2name':'member1name';await pushToFirestore({[f]:v});applyNames();renderAll();};
 window.resetApp=async()=>{
   if(!(await askConfirm('Clear all couple data and sign out?',{title:'Reset app',confirmText:'Clear data',danger:true})))return;
-  await pushToFirestore({quranLog:[],fitLog:[],instaLog:[],sharedLog:[]});
+  await pushToFirestore({quranLog:[],fitLog:[],instaLog:[],tafseerLog:[],sharedLog:[]});
   toast('Data cleared');
   setTimeout(()=>doSignOut(),1000);
 };
@@ -1193,6 +1264,13 @@ window.saveShare=async()=>{
 function setSyncDot(state){const d=$('sync-dot');if(!d)return;d.className='sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':'');}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' - '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function fmtYmd(ymd){const d=new Date(ymd+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function fmtDuration(totalMins){
+  const mins=Math.max(0,Number(totalMins)||0);
+  const h=Math.floor(mins/60),m=mins%60;
+  if(h&&m)return h+'h '+m+'m';
+  if(h)return h+'h';
+  return m+'m';
+}
 function todayYmd(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function esc(v){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 let _tt;
