@@ -735,6 +735,7 @@ let lastPartnerNotice={quran:'',fit:'',insta:'',tafseer:'',shared:''};
 let alertAudioCtx=null;
 let alertSoundReady=false;
 let notifPermissionAsked=false;
+let localNoticeId=1;
 
 function normalizeQuranEntry(entry){
   const surahIndex=Number(entry.surahIndex||entry.surahNo||entry.surah_number||0);
@@ -839,9 +840,40 @@ function sendUserNotification(message){
   toast(message);
   playAlertTone();
   if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([110,50,110]);
+  triggerNativeLocalNotification(message);
   if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
     try{new Notification('Tilawah Together',{body:message});}catch(_){}
   }
+}
+function isNativeApp(){
+  return Boolean(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform());
+}
+async function ensureNativeNotificationPermission(){
+  if(!isNativeApp())return false;
+  try{
+    const ln=window.Capacitor?.Plugins?.LocalNotifications;
+    if(!ln||!ln.checkPermissions)return false;
+    const current=await ln.checkPermissions();
+    if(current.display==='granted')return true;
+    const asked=await ln.requestPermissions();
+    return asked.display==='granted';
+  }catch(_){return false;}
+}
+async function triggerNativeLocalNotification(message){
+  if(!isNativeApp())return;
+  try{
+    const ln=window.Capacitor?.Plugins?.LocalNotifications;
+    if(!ln)return;
+    const granted=await ensureNativeNotificationPermission();
+    if(!granted)return;
+    if(ln.createChannel){
+      await ln.createChannel({id:'updates',name:'Partner Updates',importance:5,visibility:1,sound:'default'});
+    }
+    if(ln.schedule){
+      const id=localNoticeId++;
+      await ln.schedule({notifications:[{id,title:'Tilawah Together',body:message,channelId:'updates'}]});
+    }
+  }catch(_){}
 }
 function ensureAlertAudio(){
   if(alertAudioCtx)return alertAudioCtx;
@@ -880,6 +912,7 @@ function setupLocalAlerts(){
       notifPermissionAsked=true;
       try{await Notification.requestPermission();}catch(_){}
     }
+    await ensureNativeNotificationPermission();
   };
   ['click','touchstart','keydown'].forEach(evt=>{
     window.addEventListener(evt,unlock,{once:true,passive:true});
