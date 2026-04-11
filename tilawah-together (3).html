@@ -506,7 +506,8 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'Plus
         </div>
         <div class="up-row">
           <input class="inp" type="date" id="i-date">
-          <input class="inp" type="number" id="i-mins" placeholder="Minutes on Instagram" min="1">
+          <input class="inp" type="number" id="i-hours" placeholder="Hours" min="0">
+          <input class="inp" type="number" id="i-mins" placeholder="Minutes" min="0" max="59">
         </div>
         <button class="save-btn amber" onclick="saveInsta()">Save usage</button>
       </div>
@@ -1008,7 +1009,9 @@ function renderFit(){
   const logs=fLogs();
   const myL=logs.filter(l=>l.who==='me'),ptL=logs.filter(l=>l.who==='partner');
   const myS=myL.reduce((a,l)=>a+Number(l.steps||0),0),ptS=ptL.reduce((a,l)=>a+Number(l.steps||0),0);
-  const myKm=myL.reduce((a,l)=>a+Number(l.km||0),0),ptKm=ptL.reduce((a,l)=>a+Number(l.km||0),0);
+  const myKmLogged=myL.reduce((a,l)=>a+Number(l.km||0),0),ptKmLogged=ptL.reduce((a,l)=>a+Number(l.km||0),0);
+  const myKmEstimated=stepsToKm(myS),ptKmEstimated=stepsToKm(ptS);
+  const myKm=myKmLogged||myKmEstimated,ptKm=ptKmLogged||ptKmEstimated;
   const myM=myL.reduce((a,l)=>a+Number(l.mins||0),0),ptM=ptL.reduce((a,l)=>a+Number(l.mins||0),0);
   const wc=$('walk-cards');
   if(!myS&&!ptS){wc.innerHTML='<div class="empty"><div class="empty-icon">🚶</div><div class="empty-txt">No walks for this period.</div></div>';}
@@ -1030,10 +1033,11 @@ function renderFit(){
   if(!S.fitLog.length){fh.innerHTML='<div class="empty"><div class="empty-icon">🚶</div><div class="empty-txt">No walks logged yet.</div></div>';return;}
   fh.innerHTML=[...S.fitLog].reverse().slice(0,20).map((l,i)=>{
     const ri=S.fitLog.length-1-i;
+    const kmLabel=l.km?parseFloat(l.km).toFixed(1):('~'+stepsToKm(Number(l.steps||0)).toFixed(1));
     return `<div class="hist-item">
       <div class="hist-l">
         <div class="hist-icon f">🚶</div>
-        <div><div class="hist-main">${l.who==='me'?S.name:S.partner}</div><div class="hist-date">${fmtDate(l.date)}${l.km?` - ${parseFloat(l.km).toFixed(1)} km`:''}${l.mins?` - ${l.mins} min`:''}</div></div>
+        <div><div class="hist-main">${l.who==='me'?S.name:S.partner}</div><div class="hist-date">${fmtDate(l.date)} - ${kmLabel} km${l.mins?` - ${l.mins} min`:''}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="hist-val a">${Number(l.steps).toLocaleString()}</span>
@@ -1172,15 +1176,19 @@ window.saveFit=async()=>{
   $('f-steps').value='';$('f-km').value='';$('f-mins').value='';
 };
 window.saveInsta=async()=>{
-  const mins=$('i-mins').value;
+  const hours=Number($('i-hours').value||0);
+  const mins=Number($('i-mins').value||0);
   const day=$('i-date').value||todayYmd();
-  if(!mins||Number(mins)<1){toast('Enter Insta minutes 📱');return;}
+  if(hours<0||mins<0||mins>59){toast('Use valid hours/minutes 📱');return;}
+  const totalMins=hours*60+mins;
+  if(totalMins<1){toast('Enter Insta time 📱');return;}
   const snap=await getDoc(doc(db,'couples',coupleId));
   const actorUid=resolveActorUid(S.iWho,snap.data()||{});
   if(!actorUid){toast('Partner has not joined yet');return;}
-  const entry={uid:actorUid,mins:Number(mins),day,date:new Date().toISOString()};
+  const entry={uid:actorUid,mins:totalMins,day,date:new Date().toISOString()};
   await pushToFirestore({instaLog:[...(snap.data().instaLog||[]),entry]});
-  toast('📱 '+fmtDuration(Number(mins))+' saved');
+  toast('📱 '+fmtDuration(totalMins)+' saved');
+  $('i-hours').value='';
   $('i-mins').value='';
   $('i-date').value=todayYmd();
 };
@@ -1264,6 +1272,7 @@ window.saveShare=async()=>{
 function setSyncDot(state){const d=$('sync-dot');if(!d)return;d.className='sync-dot'+(state==='ok'?' ok':state==='syncing'?' syncing':'');}
 function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' - '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function fmtYmd(ymd){const d=new Date(ymd+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function stepsToKm(steps){return (Number(steps)||0)*0.00075;}
 function fmtDuration(totalMins){
   const mins=Math.max(0,Number(totalMins)||0);
   const h=Math.floor(mins/60),m=mins%60;
