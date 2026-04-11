@@ -732,6 +732,9 @@ const showScreen=id=>['screen-loading','screen-auth','screen-setup','screen-main
 let quranInputsReady=false;
 let hasInitialCoupleSnapshot=false;
 let lastPartnerNotice={quran:'',fit:'',insta:'',tafseer:'',shared:''};
+let alertAudioCtx=null;
+let alertSoundReady=false;
+let notifPermissionAsked=false;
 
 function normalizeQuranEntry(entry){
   const surahIndex=Number(entry.surahIndex||entry.surahNo||entry.surah_number||0);
@@ -808,6 +811,8 @@ async function loadUserData(uid){
 }
 
 function subscribeCouple(){
+  hasInitialCoupleSnapshot=false;
+  lastPartnerNotice={quran:'',fit:'',insta:'',tafseer:'',shared:''};
   if(unsubCouple)unsubCouple();setSyncDot('syncing');
   unsubCouple=onSnapshot(doc(db,'couples',coupleId),snap=>{
     if(!snap.exists()){showScreen('screen-setup');return;}
@@ -832,10 +837,53 @@ function latestDateForWho(arr,who){
 }
 function sendUserNotification(message){
   toast(message);
-  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(120);
+  playAlertTone();
+  if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([110,50,110]);
   if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
     try{new Notification('Tilawah Together',{body:message});}catch(_){}
   }
+}
+function ensureAlertAudio(){
+  if(alertAudioCtx)return alertAudioCtx;
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx)return null;
+  alertAudioCtx=new Ctx();
+  return alertAudioCtx;
+}
+function playAlertTone(){
+  if(!alertSoundReady)return;
+  const ctx=ensureAlertAudio();
+  if(!ctx)return;
+  try{
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.value=880;
+    gain.gain.value=0.0001;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now=ctx.currentTime;
+    gain.gain.exponentialRampToValueAtTime(0.11,now+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+0.22);
+    osc.start(now);
+    osc.stop(now+0.24);
+  }catch(_){}
+}
+function setupLocalAlerts(){
+  const unlock=async()=>{
+    const ctx=ensureAlertAudio();
+    if(ctx&&ctx.state==='suspended'){
+      try{await ctx.resume();}catch(_){}
+    }
+    alertSoundReady=true;
+    if(typeof Notification!=='undefined'&&!notifPermissionAsked&&Notification.permission==='default'){
+      notifPermissionAsked=true;
+      try{await Notification.requestPermission();}catch(_){}
+    }
+  };
+  ['click','touchstart','keydown'].forEach(evt=>{
+    window.addEventListener(evt,unlock,{once:true,passive:true});
+  });
 }
 function notifyOnIncomingUpdates(){
   const latest={
@@ -1350,6 +1398,7 @@ function initUiOnceDomReady(){
   initQuranInputs();
   $('share-date').value=todayYmd();
   $('i-date').value=todayYmd();
+  setupLocalAlerts();
 }
 if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',initUiOnceDomReady);
 else initUiOnceDomReady();
